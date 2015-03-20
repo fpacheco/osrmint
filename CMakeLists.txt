@@ -35,7 +35,7 @@ else()
   message(WARNING "Building on a 32 bit system is unsupported")
 endif()
 
-# Boost
+## Boost
 set(BOOST_COMPONENTS date_time filesystem iostreams program_options
 regex system thread unit_test_framework)
 #Check Boost
@@ -44,27 +44,39 @@ find_package(Boost ${BOOST_MIN_VERSION} COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "Fatal error: Boost (version >= 1.49.0) required.\n")
 endif()
+##
 
-# PostgreSQL
+## PostgreSQL
 find_package(PostgreSQL REQUIRED)
-message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
+# message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
+##
 
-# Threads
+## Threads
 find_package(Threads REQUIRED)
+##
 
-# OSRM
-#set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
-set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
+## OSRM
+# Office
+set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+# Home
+#set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
 set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
+##
 
-# Includes
+## Includes
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${OSRM_SOURCE_PATH}/Include ${OSRM_SOURCE_PATH}/third_party ${OSRM_SOURCE_PATH})
+##
 
-
+## cmake automatico GCC para C y GXX para cpp
 aux_source_directory(./src SRC_LIST)
-# Add shared library
-add_library(${PROJECT_NAME} SHARED ${SRC_LIST})
 
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${PostgreSQL_LIBRARIES} ${OSRM_LIBRARIES})
+## Add shared library
+add_library(${PROJECT_NAME} SHARED ${SRC_LIST} )
+# Sin prefijo lib!!
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+# Se linkea con C!!
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
+# Se agregan estas bibliotecas!!
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})

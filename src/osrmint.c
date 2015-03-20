@@ -310,19 +310,15 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
 
         DBG("iteration: %u", PG_GETARG_INT32(4));
 
-        ret = solve_trash_collection(
-                  text2char( PG_GETARG_TEXT_P( 0 ) ), // osrm_datapath
-                  text2char( PG_GETARG_TEXT_P( 1 ) ), // otherlocs
-                  text2char( PG_GETARG_TEXT_P( 2 ) ), // vehicles
-                  text2char( PG_GETARG_TEXT_P( 3 ) ), // ttimes
-                  PG_GETARG_INT32(4),                 // interation
-                  0,                                  // dont check
+        ret = route(
+                    text2char( PG_GETARG_TEXT_P( 0 ) ), // osrm_datapath
+                    text2char( PG_GETARG_TEXT_P( 1 ) ), // datapoint_sql
+                    &result,
+                    &result_count,
+                    &err_msg
+         );
 
-                  &result,
-                  &result_count,
-          &err_msg );
-
-        DBG( "solve_trash_collection returned status %i", ret );
+        DBG( "Search routes returned status %i", ret );
 
         if (err_msg) {
 DBG( "err_msg: '%s'", err_msg );
@@ -332,7 +328,7 @@ DBG( "after pstrdup" );
 DBG( "after free" );
         }
         else
-            pmsg = "Unknown Error computing solution!";
+            pmsg = "Unknown Error!";
 
 DBG( "ret=%d", ret );
 
@@ -343,7 +339,8 @@ DBG( "ret=%d", ret );
                               errmsg( "%s", pmsg ) ) );
         }
 
-        #ifdef VRPDEBUG
+        #ifdef OSRMINTDEBUG
+        /*
         DBG( "   Result count: %i", result_count );
 
         if ( ret >= 0 ) {
@@ -357,22 +354,22 @@ DBG( "ret=%d", ret );
 
             DBG( "Total Travel Time: %f", total_time );
         }
-
+        */
         #endif
 
         // total number of tuples to be returned
         funcctx->max_calls = result_count;
         funcctx->user_fctx = result;
-
         /* Build a tuple descriptor for our result type */
-        if ( get_call_result_type( fcinfo, NULL, &tuple_desc ) != TYPEFUNC_COMPOSITE )
+        if ( get_call_result_type( fcinfo, NULL, &tuple_desc ) != TYPEFUNC_COMPOSITE ) {
             ereport( ERROR,
-                     ( errcode( ERRCODE_FEATURE_NOT_SUPPORTED ),
-                       errmsg( "function returning record called in context "
-                               "that cannot accept type record" ) ) );
-
+                ( errcode( ERRCODE_FEATURE_NOT_SUPPORTED ),
+                errmsg( "function returning record called in context "
+                        "that cannot accept type record" )
+                )
+            );
+        }
         funcctx->tuple_desc = BlessTupleDesc( tuple_desc );
-
         MemoryContextSwitchTo( oldcontext );
     }
 
@@ -382,10 +379,10 @@ DBG( "ret=%d", ret );
     call_cntr = funcctx->call_cntr;
     max_calls = funcctx->max_calls;
     tuple_desc = funcctx->tuple_desc;
-    result = ( vehicle_path_t * ) funcctx->user_fctx;
+    result = ( datadt_t * ) funcctx->user_fctx;
 
-    // do when there is more left to send
     if ( call_cntr < max_calls ) {
+        // do when there is more left to send
         HeapTuple    tuple;
         Datum        result_data;
         Datum       *values;
@@ -394,36 +391,28 @@ DBG( "ret=%d", ret );
         values = palloc( 6 * sizeof( Datum ) );
         nulls = palloc( 6 * sizeof( bool ) );
 
-        values[0] = Int32GetDatum( result[call_cntr].seq );
+        values[0] = Int32GetDatum( result[call_cntr].id );
         nulls[0] = false;
-        values[1] = Int32GetDatum( result[call_cntr].vid );
+        values[1] = Float8GetDatum( result[call_cntr].tdist );
         nulls[1] = false;
-        values[2] = Int32GetDatum( result[call_cntr].nid );
+        values[2] = Float8GetDatum( result[call_cntr].ttime );
         nulls[2] = false;
-        values[3] = Int32GetDatum( result[call_cntr].ntype );
-        nulls[3] = false;
-        values[4] = Float8GetDatum( result[call_cntr].deltatime );
-        nulls[4] = false;
-        values[5] = Float8GetDatum( result[call_cntr].cargo );
-        nulls[5] = false;
 
         tuple = heap_form_tuple( tuple_desc, values, nulls );
 
         // make the tuple into a datum
         result_data = HeapTupleGetDatum( tuple );
-
         // clean up (this is not really necessary)
         pfree( values );
         pfree( nulls );
 
         SRF_RETURN_NEXT( funcctx, result_data );
-    }
-    // do when there is no more left
-    else {
+    } else {
+        // do when there is no more left
         DBG( "Going to free path" );
-
-        if ( result ) free( result );
-
+        if ( result ) {
+            free( result );
+        }
         SRF_RETURN_DONE( funcctx );
     }
 }

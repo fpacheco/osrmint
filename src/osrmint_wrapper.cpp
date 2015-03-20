@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+/* C wrapper for C++ */
 int c_wrapper_route(
     char *osrm_data_path,
     datapoint_t *datapoints,
