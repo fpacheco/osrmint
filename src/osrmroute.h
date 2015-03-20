@@ -6,6 +6,7 @@
 // OSRM
 #include <osrm/Coordinate.h>
 #include <osrm/RouteParameters.h>
+#include <Util/osrm_exception.hpp>
 
 class OSRMRoute
 {

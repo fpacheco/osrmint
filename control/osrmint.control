@@ -1,6 +1,6 @@
 # vrptools extension
-comment = 'OSRM shared memory from PostgreSQL.'
+comment = 'OSRM routes via shared memory from PostgreSQL.'
 default_version = '1.0'
 encoding = 'UTF8'
-module_pathname = '$libdir/osrmint'
+module_pathname = '$libdir/osrmint-1.0'
 relocatable = true

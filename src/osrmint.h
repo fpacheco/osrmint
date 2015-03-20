@@ -38,10 +38,10 @@ Datum osrmint_route( PG_FUNCTION_ARGS );
 // Columnas de datos
 typedef struct datapoint_columns {
     int id;
-    int xs;
-    int ys;
-    int xe;
-    int ye;
+    int xf;
+    int yf;
+    int xt;
+    int yt;
 } datapoint_columns_t;
 
 #endif // OSRMINT_H

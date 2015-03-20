@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(osrmint)
 
+set (osrmint_VERSION_MAJOR 1)
+set (osrmint_VERSION_MINOR 0)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 #c++11
@@ -76,6 +79,8 @@ aux_source_directory(./src SRC_LIST)
 add_library(${PROJECT_NAME} SHARED ${SRC_LIST} )
 # Sin prefijo lib!!
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+# Sin prefijo lib!!
+set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX "-${osrmint_VERSION_MAJOR}.${osrmint_VERSION_MINOR}.so")
 # Se linkea con C!!
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # Se agregan estas bibliotecas!!

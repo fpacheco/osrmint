@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Instalando"
+sudo cp build/osrmint-1.0.so /usr/lib/postgresql/9.3/lib/
+sudo cp sql/osrmint.sql /usr/share/postgresql/9.3/extension/osrmint--1.0.sql
+sudo cp control/osrmint.control /usr/share/postgresql/9.3/extension/

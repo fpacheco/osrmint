@@ -3,6 +3,8 @@
 */
 #include "osrmint.h"
 
+#define TUPLIMIT 1000
+
 // From C++ wrapper
 extern int c_wrapper_route(
     char *osrm_data_path,
@@ -40,31 +42,31 @@ static char *text2char( text *in ) {
 static int fetch_datapoint_columns( SPITupleTable *tuptable,
                                     datapoint_columns_t *datapoint_columns ) {
     datapoint_columns->id        = SPI_fnumber( SPI_tuptable->tupdesc, "id" );
-    datapoint_columns->xs        = SPI_fnumber( SPI_tuptable->tupdesc, "xs" );
-    datapoint_columns->ys        = SPI_fnumber( SPI_tuptable->tupdesc, "ys" );
-    datapoint_columns->xe        = SPI_fnumber( SPI_tuptable->tupdesc, "xe" );
-    datapoint_columns->ye        = SPI_fnumber( SPI_tuptable->tupdesc, "ye" );
+    datapoint_columns->xf        = SPI_fnumber( SPI_tuptable->tupdesc, "xf" );
+    datapoint_columns->yf        = SPI_fnumber( SPI_tuptable->tupdesc, "yf" );
+    datapoint_columns->xt        = SPI_fnumber( SPI_tuptable->tupdesc, "xt" );
+    datapoint_columns->yt        = SPI_fnumber( SPI_tuptable->tupdesc, "yt" );
 
     if (    datapoint_columns->id       == SPI_ERROR_NOATTRIBUTE
-            || datapoint_columns->xs        == SPI_ERROR_NOATTRIBUTE
-            || datapoint_columns->ys        == SPI_ERROR_NOATTRIBUTE
-            || datapoint_columns->xe        == SPI_ERROR_NOATTRIBUTE
-            || datapoint_columns->ye        == SPI_ERROR_NOATTRIBUTE
+            || datapoint_columns->xf        == SPI_ERROR_NOATTRIBUTE
+            || datapoint_columns->yf        == SPI_ERROR_NOATTRIBUTE
+            || datapoint_columns->xt        == SPI_ERROR_NOATTRIBUTE
+            || datapoint_columns->yt        == SPI_ERROR_NOATTRIBUTE
        ) {
         elog( ERROR, "Error: points query must return columns "
-              "'id', 'xs', 'ys', 'xe', 'ye'"
+              "'id', 'xf', 'yf', 'xt', 'yt'"
             );
         return -1;
     }
 
     if (    SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->id ) != INT4OID
-            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->xs ) != FLOAT8OID
-            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->ys ) != FLOAT8OID
-            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->xe ) != FLOAT8OID
-            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->ye ) != FLOAT8OID
+            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->xf ) != FLOAT8OID
+            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->yf ) != FLOAT8OID
+            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->xt ) != FLOAT8OID
+            || SPI_gettypeid( SPI_tuptable->tupdesc, datapoint_columns->yt ) != FLOAT8OID
        ) {
         elog( ERROR, "Error, points column types must be: int4 id"
-              ", float8 xs, float8 ys, float8 xe, float8 ye"
+              ", float8 xf, float8 yf, float8 xt, float8 yt"
             );
         return -1;
     }
@@ -81,21 +83,21 @@ static void fetch_datapoint( HeapTuple *tuple, TupleDesc *tupdesc,
     if ( isnull ) elog( ERROR, "container.id contains a null value" );
     data->id = DatumGetInt32( binval );
 
-    binval = SPI_getbinval( *tuple, *tupdesc, columns->xs, &isnull );
-    if ( isnull ) elog( ERROR, "container.x contains a null value" );
-    data->xs = DatumGetFloat8( binval );
+    binval = SPI_getbinval( *tuple, *tupdesc, columns->xf, &isnull );
+    if ( isnull ) elog( ERROR, "datapoints.xf contains a null value" );
+    data->xf = DatumGetFloat8( binval );
 
-    binval = SPI_getbinval( *tuple, *tupdesc, columns->ys, &isnull );
-    if ( isnull ) elog( ERROR, "container.y contains a null value" );
-    data->ys = DatumGetFloat8( binval );
+    binval = SPI_getbinval( *tuple, *tupdesc, columns->yf, &isnull );
+    if ( isnull ) elog( ERROR, "datapoints.yf contains a null value" );
+    data->yf = DatumGetFloat8( binval );
 
-    binval = SPI_getbinval( *tuple, *tupdesc, columns->xe, &isnull );
-    if ( isnull ) elog( ERROR, "container.x contains a null value" );
-    data->xe = DatumGetFloat8( binval );
+    binval = SPI_getbinval( *tuple, *tupdesc, columns->xt, &isnull );
+    if ( isnull ) elog( ERROR, "datapoints.xt contains a null value" );
+    data->xt = DatumGetFloat8( binval );
 
-    binval = SPI_getbinval( *tuple, *tupdesc, columns->ye, &isnull );
-    if ( isnull ) elog( ERROR, "container.y contains a null value" );
-    data->ye = DatumGetFloat8( binval );
+    binval = SPI_getbinval( *tuple, *tupdesc, columns->yt, &isnull );
+    if ( isnull ) elog( ERROR, "datapoints.yt contains a null value" );
+    data->yt = DatumGetFloat8( binval );
 }
 
 static int route(
@@ -114,7 +116,7 @@ static int route(
     datapoint_t *datapoints = NULL;
     int datapoint_count = 0;
     datapoint_columns_t datapoint_columns = {
-        .id = -1, .xs = -1, .ys = -1, .xe = -1, .ye = -1
+        .id = -1, .xf = -1, .yf = -1, .xt = -1, .yt = -1
     };
 
     char *err_msg=NULL;
@@ -206,7 +208,7 @@ static int route(
         datapoint_count,
         result,
         result_count,
-        &err_msg_out
+        err_msg_out
     );
 
     /*
@@ -279,13 +281,24 @@ static int route(
                           errmsg( "Error computing solution: %s:\n", err_msg ) ) );
     }
     */
+
+    DBG( "osrmint_route returned status: %i", ret );
+    DBG( "result_count = %i", *result_count );
+
+    DBG( "Message received from inside:" );
+    DBG( "%s", err_msg );
+
+    if ( ret < 0 ) {
+        ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
+                          errmsg( "Error finding route: %s:\n", err_msg ) ) );
+    }
+
     pfree(datapoints);
     return finish( SPIcode, ret );
 }
 
 /* by value */
 PG_FUNCTION_INFO_V1(osrmint_route);
-
 Datum osrmint_route(PG_FUNCTION_ARGS) {
 
     FuncCallContext     *funcctx;
@@ -308,8 +321,6 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
         // switch to memory context appropriate for multiple function calls
         oldcontext = MemoryContextSwitchTo( funcctx->multi_call_memory_ctx );
 
-        DBG("iteration: %u", PG_GETARG_INT32(4));
-
         ret = route(
                     text2char( PG_GETARG_TEXT_P( 0 ) ), // osrm_datapath
                     text2char( PG_GETARG_TEXT_P( 1 ) ), // datapoint_sql
@@ -321,20 +332,19 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
         DBG( "Search routes returned status %i", ret );
 
         if (err_msg) {
-DBG( "err_msg: '%s'", err_msg );
+            DBG( "err_msg: '%s'", err_msg );
             pmsg = pstrdup( err_msg );
-DBG( "after pstrdup" );
+            DBG( "after pstrdup" );
             free( err_msg );
-DBG( "after free" );
-        }
-        else
+            DBG( "after free" );
+        } else {
             pmsg = "Unknown Error!";
-
-DBG( "ret=%d", ret );
-
+        }
+        DBG( "ret=%d", ret );
         if ( ret < 0 ) {
-            if ( result ) free( result );
-
+            if ( result ) {
+                free( result );
+            }
             ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
                               errmsg( "%s", pmsg ) ) );
         }
