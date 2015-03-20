@@ -27,6 +27,12 @@ void OSRMRoute::init_data(std::string path_string)
     init_route();
 }
 
+void OSRMRoute::init_data(char* path_string)
+{
+    std::string str(path_string);
+    init_data(str);
+}
+
 /** @brief init_route
   *
   * @todo: document this function

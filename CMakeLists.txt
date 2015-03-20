@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(osrmint)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 #c++11
 if(UNIX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++11")
@@ -20,8 +22,10 @@ include(CheckCXXCompilerFlag)
 include(FindPackageHandleStandardArgs)
 # Los packages
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-#include(GetGitRevisionDescription)
-#git_describe(GIT_DESCRIPTION)
+
+# Git
+include(GetGitRevisionDescription)
+git_describe(GIT_DESCRIPTION)
 
 set(bitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -43,12 +47,14 @@ endif()
 
 # PostgreSQL
 find_package(PostgreSQL REQUIRED)
+message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
 
 # Threads
 find_package(Threads REQUIRED)
 
 # OSRM
-set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+#set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
 set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
 
 # Includes
