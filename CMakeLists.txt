@@ -58,11 +58,20 @@ find_package(PostgreSQL REQUIRED)
 find_package(Threads REQUIRED)
 ##
 
+find_package(OpenMP REQUIRED)
+if ( OPENMP_FOUND )
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  message(STATUS "**OpenMP found")
+else()
+  message(STATUS "**OpenMP NOT found")
+endif()
+
+
 ## OSRM
 # Office
-set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+#set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
 # Home
-#set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
+set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
 set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
 ##
 
