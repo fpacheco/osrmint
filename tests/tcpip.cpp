@@ -87,14 +87,16 @@ int main()
 
     /* Llamar a servicio TCPIP */
     std::cout << "Llamando a localhost" << std::endl;
-    curlpp::Cleanup cleaner;
-    curlpp::Easy request;
-
 
     try{
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+
+        curlpp::options::HttpGet();
+
         //request.setOpt(new curlpp::options::Url(url));
         //request.setOpt(new curlpp::options::Port(5000));
-        request.setOpt(new curlpp::options::UserAgent("Soy yo"));
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
 
         //request.setOpt(new curlpp::options::Verbose(true));
 
@@ -108,15 +110,21 @@ int main()
         std::clock_t c_start = std::clock();
         auto t_start = std::chrono::high_resolution_clock::now();
 
+        std::stringstream response;
         for (int i = 0; i < ndatapoints; ++i) {
             std::ostringstream url;
-            url << "http://localhost:5000/viaroute?"
+            url << "http://localhost:9000/viaroute" << "?"
                 << "loc=" << datapoints[i].yf << "," << datapoints[i].xf
                 << "&loc=" << datapoints[i].yt << "," << datapoints[i].xt
                 << "&alt=false" << "&geometry=false" << "&instructions=false";
 
-            request.setOpt(new curlpp::options::Url(url.str()));
+            request.setOpt( new curlpp::options::Url(url.str()) );
+            request.setOpt( new curlpp::options::WriteStream( &response ) );
             request.perform();
+            std::cout << "response: " << response.str() << std::endl;
+            //response.str().c_str();
+            // Lo borro con
+            response.str(std::string());
         }
 
         std::clock_t c_end = std::clock();

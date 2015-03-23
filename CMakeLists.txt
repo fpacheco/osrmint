@@ -69,9 +69,9 @@ endif()
 
 ## OSRM
 # Office
-#set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
 # Home
-set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
+#set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
 set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
 ##
 
