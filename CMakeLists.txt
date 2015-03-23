@@ -51,7 +51,7 @@ endif()
 
 ## PostgreSQL
 find_package(PostgreSQL REQUIRED)
-# message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
+message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
 ##
 
 ## Threads
@@ -94,3 +94,16 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX "-${osrmint_VERSION_MAJO
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # Se agregan estas bibliotecas!!
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
+
+## Test
+set(TESTS_SOURCE_FILES "./tests/ptest.cpp" "./src/osrmroute.cpp")
+add_executable(ptest ${TESTS_SOURCE_FILES})
+include_directories("${CMAKE_SOURCE_DIR}/src")
+target_link_libraries(ptest ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
+
+## Test
+find_package(CURL REQUIRED)
+set(TCPIP_SOURCE_FILES "./tests/tcpip.cpp")
+add_executable(tcpip ${TCPIP_SOURCE_FILES})
+include_directories("${CMAKE_SOURCE_DIR}/src" ${CURL_INCLUDE_DIRS} )
+target_link_libraries(tcpip ${CURL_LIBRARIES} "curlpp")

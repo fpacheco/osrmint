@@ -33,8 +33,6 @@ Datum osrmint_route( PG_FUNCTION_ARGS );
 #define DBG(format, arg...) do { ; } while (0)
 #endif
 
-#define TUPLIMIT 1000
-
 // Columnas de datos
 typedef struct datapoint_columns {
     int id;

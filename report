@@ -1,0 +1,33 @@
+===========================
+Para 10000 pares de puntos
+===========================
+
+Paralelo con critical
+**********************
+CPU time used: 90515.18 ms
+Wall clock time passed: 75256.18 ms
+
+Sin paralelo
+*************
+CPU time used: 65919.97 ms
+Wall clock time passed: 65973.72 ms
+
+curlpp verbose
+***************
+osrm-route -t 8 
+CPU time used: 2900.38 ms
+Wall clock time passed: 33428.85 ms
+
+osrm-route -t 16
+CPU time used: 2891.64 ms
+Wall clock time passed: 33500.09 ms
+
+curlpp NOT verbose
+*******************
+osrm-route -t 16 
+CPU time used: 2483.87 ms
+Wall clock time passed: 32676.31 ms
+
+Python con requests
+********************
+55.2062869072

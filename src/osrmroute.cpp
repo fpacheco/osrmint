@@ -4,29 +4,51 @@
 #include <boost/filesystem/path.hpp>
 //Rapidjson
 #include <rapidjson/document.h>
+//OpenMP
+//#include <omp.h>
 /* osrm-backend */
 #include <osrm/ServerPaths.h>
 #include <Util/ProgramOptions.h>
 #include <Server/DataStructures/InternalDataFacade.h>
 #include <plugins/viaroute.hpp>
 
-ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>> *router;
 
+/** @brief init_route
+  *
+  * @todo: document this function
+  */
 void OSRMRoute::init_data(std::string path_string)
 {
     //fetch data from files
     ServerPaths paths;
     paths["base"] = path_string;
     boost::filesystem::path path = paths["base"];
+
     populate_base_path(paths);
 
-    //construct router object
-    InternalDataFacade<QueryEdge::EdgeData> *query_data_facade = new InternalDataFacade<QueryEdge::EdgeData>(paths);
-    router = new ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>>(query_data_facade);
+    //construct router object. shared memory = SharedDataFacade, paths InternalDataFacade
+    mQueryDataFacade = new InternalDataFacade<QueryEdge::EdgeData>(paths);
+
+    std::cout << "Nodes: " << mQueryDataFacade->GetNumberOfNodes() << std::endl
+              << "Edges: " << mQueryDataFacade->GetNumberOfEdges() << std::endl;
+
+    mRouter = new ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>>(mQueryDataFacade);
 
     init_route();
 }
 
+
+OSRMRoute::~OSRMRoute()
+{
+    delete mQueryDataFacade;
+    delete mRouter;
+}
+
+
+/** @brief init_route
+  *
+  * @todo: document this function
+  */
 void OSRMRoute::init_data(char* path_string)
 {
     std::string str(path_string);
@@ -51,7 +73,10 @@ void OSRMRoute::init_route()
     mRouteParameters.language = "";              // unused atm
 }
 
-//makes call to OSRM and returns route weights
+/** @brief init_route
+  *
+  * @todo: document this function
+  */
 void OSRMRoute::route(FixedPointCoordinate startPoint, FixedPointCoordinate endPoint)
 {
     mTotalDistance = -1;
@@ -63,7 +88,9 @@ void OSRMRoute::route(FixedPointCoordinate startPoint, FixedPointCoordinate endP
     mRouteParameters.coordinates.push_back(endPoint);
 
     http::Reply reply;
+    ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>> *router = new ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>>(mQueryDataFacade);
     router->HandleRequest(mRouteParameters, reply);
+    //mRouter->HandleRequest(mRouteParameters, reply);
 
     if (reply.status==http::Reply::ok)
     {
@@ -109,7 +136,62 @@ void OSRMRoute::route(FixedPointCoordinate startPoint, FixedPointCoordinate endP
         mTotalDistance = -1;
         mTotalTime = -1;
     }
+    delete router;
 }
+
+/** @brief init_route
+  *
+  * @todo: document this function
+  */
+void OSRMRoute::routewr(FixedPointCoordinate startPoint, FixedPointCoordinate endPoint, float *result)
+{
+    int tdist = -1;
+    int ttime = -1;
+
+    // Clear pevious data
+    mRouteParameters.coordinates.clear();
+    mRouteParameters.coordinates.push_back(startPoint);
+    mRouteParameters.coordinates.push_back(endPoint);
+
+    http::Reply reply;
+    ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>> *router = new ViaRoutePlugin<InternalDataFacade<QueryEdge::EdgeData>>(mQueryDataFacade);
+    router->HandleRequest(mRouteParameters, reply);
+
+    if (reply.status==http::Reply::ok)
+    {
+        //std::cout << "ok" << std::endl;
+
+        std::vector<char> replyContent = reply.content;
+
+        /*
+        std::cout << "replyContent contains:";
+        for (std::vector<char>::iterator it = replyContent.begin() ; it != replyContent.end(); ++it)
+          std::cout << *it;
+        std::cout << '\n';
+        */
+
+        // Read the reply
+        rapidjson::Document jsonDoc;
+        std::string str( replyContent.begin(),replyContent.end() );
+
+        if ( jsonDoc.Parse( str.c_str() ).HasParseError() ) {
+            std::cout << "*** Error parsing ***" << std::endl;
+        } else {
+            if (jsonDoc["status"].GetInt()==0)
+            {
+                //std::cout << "status==0" << std::endl;
+                tdist = jsonDoc["route_summary"]["total_distance"].GetDouble();
+                ttime = jsonDoc["route_summary"]["total_time"].GetDouble();
+            }
+        }
+    } else {
+        std::cout << "NOT OK" << std::endl;
+    }
+    result[0] = tdist;
+    result[1] = ttime;
+    delete router;
+}
+
 
 /** @brief float2Int
   *
@@ -138,6 +220,73 @@ void OSRMRoute::route(float sLon, float sLat, float eLon, float eLat)
         FixedPointCoordinate( floatToIntWithMult(sLat, mMult), floatToIntWithMult(sLon, mMult) ),
         FixedPointCoordinate( floatToIntWithMult(eLat, mMult), floatToIntWithMult(eLon, mMult) )
     );
+}
+
+/** @brief route
+  *
+  * @todo: document this function
+  */
+void OSRMRoute::routewr(float sLon, float sLat, float eLon, float eLat, float *result)
+{
+    routewr(
+        FixedPointCoordinate( floatToIntWithMult(sLat, mMult), floatToIntWithMult(sLon, mMult) ),
+        FixedPointCoordinate( floatToIntWithMult(eLat, mMult), floatToIntWithMult(eLon, mMult) ),
+        result
+    );
+}
+
+
+int OSRMRoute::route(datapoint_t *datapoints, int ndatapoints, datadt_t **result)
+{
+    try {
+        *result = ( datadt_t * ) malloc( ndatapoints * sizeof( datadt_t ) );
+
+        //#pragma omp parallel
+        {            
+            //#pragma omp for
+            for ( int i = 0; i < ndatapoints; ++i ) {                
+                float *rData = (float*) malloc(2*sizeof(double));
+                rData[0] = -1.0;
+                rData[1] = -1.0;
+                //#pragma omp critical
+                {
+                    routewr(
+                        FixedPointCoordinate(
+                            floatToIntWithMult(datapoints[i].yf,mMult),
+                            floatToIntWithMult(datapoints[i].xf,mMult)
+                        ),
+                        FixedPointCoordinate(
+                            floatToIntWithMult(datapoints[i].yt,mMult),
+                            floatToIntWithMult(datapoints[i].xt,mMult)
+                        ),
+                        rData
+                    );
+                }
+                (*result+i)->id          = datapoints[i].id;
+                (*result+i)->tdist       = rData[0]; //getTotalDistance();
+                (*result+i)->ttime       = rData[1]; //getTotalTime();
+                //(*result+i)->tdist       = 2.0;
+                //(*result+i)->ttime       = 3.0;
+            }
+        }
+
+    } catch ( std::exception &e ) {
+        //*err_msg = strdup( e.what() );
+        return -1;
+    } catch ( ... ) {
+        //*err_msg = strdup( "Caught unknown expection!" );
+        return -1;
+    }
+    //*err_msg = (char *)0;
+    return EXIT_SUCCESS;
+}
+
+
+vdatadt OSRMRoute::route(vdatapoint datapoints)
+{
+    vdatadt result;
+
+    return result;
 }
 
 /** @brief getTotalDistance

@@ -206,7 +206,7 @@ static int route(
         osrm_data_path,
         datapoints,
         datapoint_count,
-        result,
+        result=NULL,
         result_count,
         err_msg_out
     );

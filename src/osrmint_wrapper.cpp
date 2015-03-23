@@ -6,8 +6,6 @@
 #include <exception>
 #include <string.h>
 
-#include <omp.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,19 +28,19 @@ int c_wrapper_route(
         router->init_data(osrm_data_path);
         //User* u1 = (User*)malloc(sizeof(User));
         //results = ( vehicle_path_t * ) malloc( count * sizeof( vehicle_path_t ) );
+        *result_count = ndatapoints;
         *result = ( datadt_t * ) malloc( ndatapoints * sizeof( datadt_t ) );
 
-        #pragma omp parallel
+        //#pragma omp parallel
         {
-            #pragma omp for
+            //#pragma omp for
             for ( int i = 0; i < ndatapoints; ++i ) {
                 router->route(datapoints[i].xf,datapoints[i].yf,datapoints[i].xt,datapoints[i].yt);
                 (*result+i)->id          = datapoints[i].id;
                 (*result+i)->tdist       = router->getTotalDistance();
                 (*result+i)->ttime       = router->getTotalTime();
             }
-        }
-        *result_count = ndatapoints;
+        }        
 
     } catch ( std::exception &e ) {
         *err_msg = strdup( e.what() );
