@@ -82,10 +82,10 @@ include_directories(${OSRM_SOURCE_PATH}/Include ${OSRM_SOURCE_PATH}/third_party 
 ##
 
 ## cmake automatico GCC para C y GXX para cpp
-aux_source_directory(./src SRC_LIST)
+## aux_source_directory(./src SRC_LIST)
 
 ## Add shared library
-add_library(${PROJECT_NAME} SHARED ${SRC_LIST} )
+add_library(${PROJECT_NAME} SHARED "./src/osrmcurlpp.cpp" "./src/osrmint_wrapper.cpp" "./src/osrmint.c" )
 # Sin prefijo lib!!
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 # Sin prefijo lib!!
@@ -93,7 +93,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX "-${osrmint_VERSION_MAJO
 # Se linkea con C!!
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # Se agregan estas bibliotecas!!
-target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
+#target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} "curlpp")
 
 ## Test
 set(TESTS_SOURCE_FILES "./tests/ptest.cpp" "./src/osrmroute.cpp")

@@ -101,7 +101,7 @@ static void fetch_datapoint( HeapTuple *tuple, TupleDesc *tupdesc,
 }
 
 static int route(
-    char *osrm_data_path,
+    char *baseURL,
     char *datapoint_sql,
     datadt_t **result,
     int *result_count,
@@ -203,84 +203,13 @@ static int route(
 
     DBG( "Calling route\n" );
     ret = c_wrapper_route(
-        osrm_data_path,
+        baseURL,
         datapoints,
         datapoint_count,
         result=NULL,
         result_count,
         err_msg_out
     );
-
-    /*
-    #if 0
-    FILE *fh = fopen( "/tmp/test.txt", "wb" );
-    int i;
-
-    if ( !fh ) return -1; //a notice of why we are returning????
-
-    fprintf( fh, "%d %d %d %d\n",
-             container_count, otherloc_count, vehicle_count, ttime_count );
-    fprintf( fh, "------ containers -----\n" );
-
-    for ( i = 0; i < container_count; i++ ) {
-        container_t c = containers[i];
-        fprintf( fh, "%d %.6lf %.6lf %d %d %d %d\n",
-                 c.id, c.x, c.y, c.open, c.close, c.service, c.demand );
-    }
-
-    fprintf( fh, "------ otherlocs -----\n" );
-
-    for ( i = 0; i < otherloc_count; i++ ) {
-        otherloc_t c = otherlocs[i];
-        fprintf( fh, "%d %.6lf %.6lf %d %d\n",
-                 c.id, c.x, c.y, c.open, c.close );
-    }
-
-    fprintf( fh, "------ vehicles -----\n" );
-
-    for ( i = 0; i < vehicle_count; i++ ) {
-        vehicle_t c = vehicles[i];
-        fprintf( fh, "%d %d %d %d %d %d %d %d\n",
-                 c.vid, c.start_id, c.dump_id, c.end_id, c.capacity,
-                 c.dumpservicetime, c.starttime, c.endtime );
-    }
-
-    fprintf( fh, "------ ttimes -----\n" );
-
-    for ( i = 0; i < ttime_count; i++ ) {
-        ttime_t c = ttimes[i];
-        fprintf( fh, "%d %d %.6lf\n", c.from_id, c.to_id, c.ttime );
-    }
-
-    fclose( fh );
-
-    #else
-    DBG("Calling vrp_trash_collection ");
-    ret = vrp_trash_collection(
-              containers, container_count,
-              otherlocs, otherloc_count,
-              vehicles, vehicle_count,
-              ttimes, ttime_count,
-              iteration, check,
-              result, result_count, &err_msg, err_msg_out );
-    #endif
-
-    DBG( "vrp_trash_collection returned status: %i", ret );
-    DBG( "result_count = %i", *result_count );
-
-    if (check) {
-      DBG( "Message received from inside:" );
-      DBG( "%s", *err_msg_out );
-    } else {
-      DBG( "Message received from inside:" );
-      DBG( "%s", err_msg );
-    }
-
-    if ( ret < 0 ) {
-        ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
-                          errmsg( "Error computing solution: %s:\n", err_msg ) ) );
-    }
-    */
 
     DBG( "osrmint_route returned status: %i", ret );
     DBG( "result_count = %i", *result_count );
@@ -322,7 +251,7 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
         oldcontext = MemoryContextSwitchTo( funcctx->multi_call_memory_ctx );
 
         ret = route(
-                    text2char( PG_GETARG_TEXT_P( 0 ) ), // osrm_datapath
+                    text2char( PG_GETARG_TEXT_P( 0 ) ), // baseURL
                     text2char( PG_GETARG_TEXT_P( 1 ) ), // datapoint_sql
                     &result,
                     &result_count,

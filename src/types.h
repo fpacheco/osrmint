@@ -17,4 +17,12 @@ typedef struct datadt_ {
   double ttime; // Travel time
 } datadt_t;
 
+// Route sequence structure
+typedef struct dataviaroute_ {
+  int seq;
+  int nodeid;   // Identificador unico del nodo
+  double x;     // Longitud from
+  double y;     // Latitud from
+} dataviaroute_t;
+
 #endif // TYPES_H
