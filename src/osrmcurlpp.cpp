@@ -14,6 +14,29 @@
 
 #include "osrmcurlpp.h"
 
+bool OSRMCurlpp::checkCon() {
+    try {
+        // Curlpp declarations
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+        std::stringstream response;
+        // Write resonse to string
+        request.setOpt( new curlpp::options::WriteStream( &response ) );
+        std::ostringstream url;
+        url << mBaseURL;
+        request.setOpt( new curlpp::options::Url(url.str()) );
+        request.perform();
+        // No exception. URL (host and port) is valid.
+        return true;
+    } catch ( curlpp::LogicError & e ) {
+        std::cout << "curlpp LogicError: " << e.what() << std::endl;
+    } catch ( curlpp::RuntimeError & e ) {
+        std::cout << "curlpp RuntimeError: " << e.what() << std::endl;
+    }
+    // Exception. URL (host and port) is invalid.
+    return false;
+}
+
 void OSRMCurlpp::getRoute(float fLon, float fLat, float tLon, float tLat){
     try {
         // Curlpp declarations

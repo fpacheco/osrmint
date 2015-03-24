@@ -208,14 +208,16 @@ static int route(
         datapoint_count,
         result,
         result_count,
-        err_msg_out
+        &err_msg
     );
 
+    /*
     DBG( "osrmint_route returned status: %i", ret );
     DBG( "result_count = %i", *result_count );
 
     DBG( "Message received from inside:" );
     DBG( "%s", err_msg );
+    */
 
     if ( ret < 0 ) {
         ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),

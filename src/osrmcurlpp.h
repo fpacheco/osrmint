@@ -28,6 +28,7 @@ public:
     void getRoute(float fLon, float fLat, float tLon, float tLat);
     int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
     void parseOSRM(const char* resp);
+    bool checkCon();
 
 private:
     // Private variables
