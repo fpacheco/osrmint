@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(osrmint)
 
-set (osrmint_VERSION_MAJOR 1)
-set (osrmint_VERSION_MINOR 0)
+set (osrmint_VERSION_MAJOR 0)
+set (osrmint_VERSION_MINOR 1)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -38,6 +38,7 @@ else()
   message(WARNING "Building on a 32 bit system is unsupported")
 endif()
 
+### Find
 ## Boost
 set(BOOST_COMPONENTS date_time filesystem iostreams program_options
 regex system thread unit_test_framework)
@@ -58,6 +59,7 @@ message(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
 find_package(Threads REQUIRED)
 ##
 
+## Threads
 find_package(OpenMP REQUIRED)
 if ( OPENMP_FOUND )
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -65,26 +67,31 @@ if ( OPENMP_FOUND )
 else()
   message(STATUS "**OpenMP NOT found")
 endif()
+##
 
+## CURL
+find_package(CURL REQUIRED)
+##
+###
 
 ## OSRM
 # Office
-set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
+#set(OSRM_SOURCE_PATH "/disco_local/fpacheco/im/osrm-backend")
 # Home
 #set(OSRM_SOURCE_PATH "/home/fpacheco/workspace/idm/osrm-backend")
-set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
+#set(OSRM_LIBRARIES ${OSRM_SOURCE_PATH}/build/libOSRM.a)
 ##
 
-## Includes
+### Includes
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${OSRM_SOURCE_PATH}/Include ${OSRM_SOURCE_PATH}/third_party ${OSRM_SOURCE_PATH})
-##
+###
 
 ## cmake automatico GCC para C y GXX para cpp
 ## aux_source_directory(./src SRC_LIST)
 
-## Add shared library
+### PostgreSQL module (shared library)
 add_library(${PROJECT_NAME} SHARED "./src/osrmcurlpp.cpp" "./src/osrmint_wrapper.cpp" "./src/osrmint.c" )
 # Sin prefijo lib!!
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
@@ -93,18 +100,23 @@ set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX "-${osrmint_VERSION_MAJO
 # Se linkea con C!!
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
 # Se agregan estas bibliotecas!!
-#target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} "curlpp")
+###
 
-## Test
-set(TESTS_SOURCE_FILES "./tests/ptest.cpp" "./src/osrmroute.cpp")
-add_executable(ptest ${TESTS_SOURCE_FILES})
-include_directories("${CMAKE_SOURCE_DIR}/src")
-target_link_libraries(ptest ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
+### Test
+#set(TESTS_SOURCE_FILES "./tests/ptest.cpp" "./src/osrmroute.cpp")
+#add_executable(ptest ${TESTS_SOURCE_FILES})
+#include_directories("${CMAKE_SOURCE_DIR}/src")
+#target_link_libraries(ptest ${Boost_LIBRARIES} ${Threads_LIBRARIES} ${OSRM_LIBRARIES})
 
-## Test
-find_package(CURL REQUIRED)
+### Tests
 set(TCPIP_SOURCE_FILES "./tests/tcpip.cpp")
 add_executable(tcpip ${TCPIP_SOURCE_FILES})
 include_directories("${CMAKE_SOURCE_DIR}/src" ${CURL_INCLUDE_DIRS} )
 target_link_libraries(tcpip ${CURL_LIBRARIES} "curlpp")
+
+### Tests
+set(TEST1_SOURCE_FILES "./tests/test1.cpp" "./src/osrmcurlpp.cpp")
+add_executable(test1 ${TEST1_SOURCE_FILES})
+include_directories("${CMAKE_SOURCE_DIR}/src" ${CURL_INCLUDE_DIRS} )
+target_link_libraries(test1 ${CURL_LIBRARIES} "curlpp")

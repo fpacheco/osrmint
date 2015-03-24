@@ -10,11 +10,12 @@
 ---------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION osrmint_route (
-        IN osrm_path text,
-        IN datapoint_sql text,
+        IN base_url text, -- http://localhost:5000/viaroute
+        IN datapoint_sql text, -- sql
         OUT id integer,
         OUT tdist float8,
         OUT ttime float8
     ) RETURNS RECORD
     AS 'MODULE_PATHNAME', 'osrmint_route'
     LANGUAGE c STABLE STRICT;
+

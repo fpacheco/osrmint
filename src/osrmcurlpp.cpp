@@ -14,23 +14,46 @@
 
 #include "osrmcurlpp.h"
 
-void OSRMCurlpp::setBaseURL(std::string url){
-    mBaseURL = url;
+void OSRMCurlpp::getRoute(float fLon, float fLat, float tLon, float tLat){
+    try {
+        // Curlpp declarations
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+        std::stringstream response;
+        std::list<std::string> header;
+        //???
+        //curlpp::options::HttpGet();
+        // Headers
+        header.push_back("Content-Type: application/octet-stream");
+        request.setOpt(new curlpp::options::HttpHeader(header));
+        // UserAgent
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        // Verbose for debug
+        // request.setOpt(new curlpp::options::Verbose(true));
+        // Write resonse to string
+        request.setOpt( new curlpp::options::WriteStream( &response ) );
+        std::ostringstream url;
+        url << mBaseURL << "?"
+            << "loc=" << fLat << "," << fLon
+            << "&loc=" << tLat << "," << tLon
+            << "&alt=false" << "&geometry=false" << "&instructions=false";
+        request.setOpt( new curlpp::options::Url(url.str()) );
+        request.perform();
+        //std::cout << "response: " << response.str() << std::endl;
+        // Parse response in json
+        parseOSRM( response.str().c_str() );
+    } catch ( curlpp::LogicError & e ) {
+        std::cout << "curlpp LogicError: " << e.what() << std::endl;
+        mTotalDistance = -1;
+        mTotalTime = -1;
+    } catch ( curlpp::RuntimeError & e ) {
+        std::cout << "curlpp RuntimeError: " << e.what() << std::endl;
+        mTotalDistance = -1;
+        mTotalTime = -1;
+    }
 }
 
-void OSRMCurlpp::setBaseURL(char* url){
-    mBaseURL = std::string(url);
-}
-
-std::string OSRMCurlpp::getBaseURL(){
-    return mBaseURL;
-}
-
-void OSRMCurlpp::getRoute(float sLon, float sLat, float eLon, float eLat){
-
-}
-
-int OSRMCurlpp::getDataRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result){
+int OSRMCurlpp::getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result) {
 
     try {
         // Allocate memory for result
@@ -48,12 +71,9 @@ int OSRMCurlpp::getDataRoute(datapoint_t *datapoints, int ndatapoints, datadt_t 
         // UserAgent
         request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
         // Verbose for debug
-        request.setOpt(new curlpp::options::Verbose(true));
+        // request.setOpt(new curlpp::options::Verbose(true));
         // Write resonse to string
         request.setOpt( new curlpp::options::WriteStream( &response ) );
-
-        std::clock_t c_start = std::clock();
-        auto t_start = std::chrono::high_resolution_clock::now();
 
         // Iterate thru datapoints
         for (int i = 0; i < ndatapoints; ++i) {
@@ -68,29 +88,20 @@ int OSRMCurlpp::getDataRoute(datapoint_t *datapoints, int ndatapoints, datadt_t 
             try {
                 request.perform();
                 //std::cout << "response: " << response.str() << std::endl;
-                // Parse reponse in json
-                parseDataRoute( response.str().c_str() );
+                // Parse response in json
+                parseOSRM( response.str().c_str() );
                 // Set result data
                 (*result+i)->id          = datapoints[i].id;
                 (*result+i)->tdist       = mTotalDistance;
                 (*result+i)->ttime       = mTotalTime;
             } catch ( curlpp::LogicError & e ) {
-                std::cout << e.what() << std::endl;
+                std::cout << "curlpp LogicError: " << e.what() << std::endl;
             } catch ( curlpp::RuntimeError & e ) {
-                std::cout << e.what() << std::endl;
+                std::cout << "curlpp RuntimeError: " << e.what() << std::endl;
             }
             // Vacio el reponse
             response.str(std::string());
         }
-
-        std::clock_t c_end = std::clock();
-        auto t_end = std::chrono::high_resolution_clock::now();
-
-        std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
-                  << 1000.0 * (c_end-c_start) / CLOCKS_PER_SEC << " ms\n"
-                  << "Wall clock time passed: "
-                  << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-                  << " ms\n";
         return 0;
     } catch ( curlpp::LogicError & e ) {
       std::cout << e.what() << std::endl;
@@ -101,18 +112,10 @@ int OSRMCurlpp::getDataRoute(datapoint_t *datapoints, int ndatapoints, datadt_t 
     }
 }
 
-float OSRMCurlpp::getTotalDistance(){
-    return mTotalDistance;
-}
+void OSRMCurlpp::parseOSRM(const char* resp){
 
-float OSRMCurlpp::getTotalTime(){
-    return mTotalTime;
-}
-
-void OSRMCurlpp::parseDataRoute(const char* resp){
-
-    mTotalDistance = -1.0;
-    mTotalTime = -1.0;
+    mTotalDistance = -1;
+    mTotalTime = -1;
 
     rapidjson::Document jsonDoc;
     //std::string str( replyContent.begin(),replyContent.end() );
@@ -124,9 +127,17 @@ void OSRMCurlpp::parseDataRoute(const char* resp){
         if (jsonDoc["status"].GetInt()==0) {
             //std::cout << "status==0" << std::endl;
             if ( jsonDoc.HasMember("route_summary") ) {
-                mTotalDistance = jsonDoc["route_summary"]["total_distance"].GetDouble();
-                mTotalTime = jsonDoc["route_summary"]["total_time"].GetDouble();
+                mTotalDistance = jsonDoc["route_summary"]["total_distance"].GetInt();
+                mTotalTime = jsonDoc["route_summary"]["total_time"].GetInt();
             }
+            if ( jsonDoc.HasMember("route_geometry") ) {
+                // array [[-34.906479,-56.186089],[-34.906433,-56.185513] ...]
+            }
+            if ( jsonDoc.HasMember("route_instructions") ) {
+                // array ["10","San José",142,0,22,"141m","E",85,1],["7","Doctor Javier Barrios Amorín",77,3,5,"76m","N",354,1] ...]
+            }
+        } else {
+            std::cout << "Error: json status!=0 on OSRM" << std::endl;
         }
     }
 }

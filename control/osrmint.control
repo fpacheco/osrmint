@@ -1,6 +1,6 @@
-# vrptools extension
-comment = 'OSRM routes via shared memory from PostgreSQL.'
-default_version = '1.0'
+# orsmint extension
+comment = 'OSRM routes via TCP/IP from PostgreSQL.'
+default_version = '0.1'
 encoding = 'UTF8'
-module_pathname = '$libdir/osrmint-1.0'
+module_pathname = '$libdir/osrmint-0.1'
 relocatable = true

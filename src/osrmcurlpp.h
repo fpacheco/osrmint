@@ -20,21 +20,25 @@ class OSRMCurlpp
 
 public:
     ~OSRMCurlpp();
-    void setBaseURL(std::string url);
-    void setBaseURL(char* url);
-    std::string getBaseURL();
-    void getRoute(float sLon, float sLat, float eLon, float eLat);
-    int getDataRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
-    float getTotalDistance();
-    float getTotalTime();
+    void setBaseURL(std::string url) { mBaseURL = url; }
+    void setBaseURL(char* url) { mBaseURL = std::string(url); }
+    std::string getBaseURL() { return mBaseURL; }
+    float getTotalDistance() { return mTotalDistance; }
+    float getTotalTime() { return mTotalTime; }
+    void getRoute(float fLon, float fLat, float tLon, float tLat);
+    int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
+    void parseOSRM(const char* resp);
 
 private:
     // Private variables
     std::string mBaseURL = "http://localhost:5000/viaroute";
-    float mTotalDistance = -1.0;
-    float mTotalTime = -1.0;
+    int mTotalDistance = -1;
+    int mTotalTime = -1;
+    bool mGeometry = true;
+    bool mInstructions = true;
+    bool mCompression = false;
+    bool mRouteAlt = false;
     // Private methods and functions
-    void parseDataRoute(const char* resp);
 
 };
 

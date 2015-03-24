@@ -26,9 +26,9 @@ int c_wrapper_route(
     try {
         OSRMCurlpp* router = new OSRMCurlpp();
         router->setBaseURL(baseURL);
-        router->getDataRoute(datapoints, ndatapoints, result);
+        router->getRoute(datapoints, ndatapoints, result);
         *result_count = ndatapoints;
-   } catch ( std::exception &e ) {
+    } catch ( std::exception &e ) {
         *err_msg = strdup( e.what() );
         return -1;
     } catch ( ... ) {

@@ -7,7 +7,7 @@
 
 // From C++ wrapper
 extern int c_wrapper_route(
-    char *osrm_data_path,
+    char *baseURL,
     datapoint_t *datapoints,
     int ndatapoints,
     datadt_t **result,
@@ -206,7 +206,7 @@ static int route(
         baseURL,
         datapoints,
         datapoint_count,
-        result=NULL,
+        result,
         result_count,
         err_msg_out
     );
