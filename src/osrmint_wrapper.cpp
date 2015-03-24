@@ -1,4 +1,3 @@
-#include "types.h"
 #include "osrmcurlpp.h"
 
 #include <stdlib.h>
@@ -31,7 +30,7 @@ int c_wrapper_route(
             *result_count = ndatapoints;
         } else {
             *result_count = 0;
-            *err_msg = strdup( "URL Error: Wrong port or IP!" );
+            *err_msg = strdup( "Wrong port or IP un URL!" );
             return -10;
         }
     } catch ( std::exception &e ) {
@@ -45,6 +44,39 @@ int c_wrapper_route(
     *err_msg = (char *)0;
     return EXIT_SUCCESS;
 }
+
+int c_wrapper_viaroute(
+    char *baseURL,
+    dataviaroute_t *datapoints,
+    int ndatapoints,
+    dataroutegeom_t **result,
+    int *result_count,
+    char **err_msg
+) {
+
+    try {
+        OSRMCurlpp* router = new OSRMCurlpp();
+        router->setBaseURL(baseURL);
+        if (router->checkCon()) {
+            router->getViaRoute(datapoints, ndatapoints, result);
+            *result_count = ndatapoints;
+        } else {
+            *result_count = 0;
+            *err_msg = strdup( "Wrong port or IP un URL!" );
+            return -10;
+        }
+    } catch ( std::exception &e ) {
+        *err_msg = strdup( e.what() );
+        return -20;
+    } catch ( ... ) {
+        *err_msg = strdup( "Caught unknown expection!" );
+        return -20;
+    }
+
+    *err_msg = (char *)0;
+    return EXIT_SUCCESS;
+}
+
 
 #ifdef __cplusplus
 }

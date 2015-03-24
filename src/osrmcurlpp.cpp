@@ -37,7 +37,7 @@ bool OSRMCurlpp::checkCon() {
     return false;
 }
 
-void OSRMCurlpp::getRoute(float fLon, float fLat, float tLon, float tLat){
+void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
     try {
         // Curlpp declarations
         curlpp::Cleanup cleaner;
@@ -135,6 +135,15 @@ int OSRMCurlpp::getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **re
     }
 }
 
+
+void OSRMCurlpp::viaRoute() {
+
+}
+
+int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutegeom_t **result) {
+
+}
+
 void OSRMCurlpp::parseOSRM(const char* resp){
 
     mTotalDistance = -1;
@@ -149,12 +158,14 @@ void OSRMCurlpp::parseOSRM(const char* resp){
     } else {
         if (jsonDoc["status"].GetInt()==0) {
             //std::cout << "status==0" << std::endl;
+            mRouteJSON = std::string(resp);
             if ( jsonDoc.HasMember("route_summary") ) {
                 mTotalDistance = jsonDoc["route_summary"]["total_distance"].GetInt();
                 mTotalTime = jsonDoc["route_summary"]["total_time"].GetInt();
             }
             if ( jsonDoc.HasMember("route_geometry") ) {
                 // array [[-34.906479,-56.186089],[-34.906433,-56.185513] ...]
+
             }
             if ( jsonDoc.HasMember("route_instructions") ) {
                 // array ["10","San José",142,0,22,"141m","E",85,1],["7","Doctor Javier Barrios Amorín",77,3,5,"76m","N",354,1] ...]
@@ -164,3 +175,4 @@ void OSRMCurlpp::parseOSRM(const char* resp){
         }
     }
 }
+

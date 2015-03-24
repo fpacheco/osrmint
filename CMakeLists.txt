@@ -92,7 +92,17 @@ include_directories(${OSRM_SOURCE_PATH}/Include ${OSRM_SOURCE_PATH}/third_party 
 ## aux_source_directory(./src SRC_LIST)
 
 ### PostgreSQL module (shared library)
-add_library(${PROJECT_NAME} SHARED "./src/osrmcurlpp.cpp" "./src/osrmint_wrapper.cpp" "./src/osrmint.c" )
+set(OSRMINT_SOURCES
+    "./src/osrmintutils.c"
+    "./src/osrmintroute.c"
+    "./src/osrmintviaroute.c"
+    "./src/osrmcurlpp.cpp"
+    "./src/osrmint_wrapper.cpp"
+    "./src/osrmint.c"
+)
+
+
+add_library(${PROJECT_NAME} SHARED ${OSRMINT_SOURCES})
 # Sin prefijo lib!!
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 # Sin prefijo lib!!

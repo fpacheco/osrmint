@@ -91,9 +91,9 @@ int main()
 
     router->setBaseURL("http://localhost:5000/viaroute");
     //router->getRoute(datapoints,ndatapoints,result);
-    router->getRoute(-56.18605, -34.90685, -56.096480, -34.849390);
-    std::cout << "Total distance: " << router->getTotalDistance() << std::endl;
-    std::cout << "Total time: " << router->getTotalTime() << std::endl;
+    router->route(-56.18605, -34.90685, -56.096480, -34.849390);
+    std::cout << "Total distance: " << router->totalDistance() << std::endl;
+    std::cout << "Total time: " << router->totalTime() << std::endl;
 
     router->setBaseURL("http://localhost:9000/viaroute");
     if (router->checkCon()){
@@ -108,10 +108,10 @@ int main()
 
     router->setBaseURL("http://localhost:5000/viaroute");
 
+    /*
     std::clock_t c_start = std::clock();
     auto t_start = std::chrono::high_resolution_clock::now();
 
-    /*
     router->getRoute(datapoints, ndatapoints, &result);
     std::clock_t c_end = std::clock();
     auto t_end = std::chrono::high_resolution_clock::now();

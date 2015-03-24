@@ -2,10 +2,13 @@
 #define OSRMRCURLPP_H
 // App types
 #include "types.h"
+
 // Basic
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
+
 // Curlpp
 #include <curlpp/cURLpp.hpp>
 #include <curlpp/Easy.hpp>
@@ -22,23 +25,49 @@ public:
     ~OSRMCurlpp();
     void setBaseURL(std::string url) { mBaseURL = url; }
     void setBaseURL(char* url) { mBaseURL = std::string(url); }
-    std::string getBaseURL() { return mBaseURL; }
-    float getTotalDistance() { return mTotalDistance; }
-    float getTotalTime() { return mTotalTime; }
-    void getRoute(float fLon, float fLat, float tLon, float tLat);
-    int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
-    void parseOSRM(const char* resp);
+    std::string baseURL() { return mBaseURL; }
     bool checkCon();
+
+    void reqGeom(bool req) { mReqGeometry = req; }
+    bool reqGeom() const { return mReqGeometry; }
+
+    void reqIns(bool req) { mInstructions = req; }
+    bool reqIns() const { return mInstructions; }
+
+    void reqAlt(bool req) { mRouteAlt = req; }
+    bool reqAlt() const { return mRouteAlt; }
+
+    void reqComp(bool req) { mCompression = req; }
+    bool reqComp() const { return mCompression; }
+
+    void route(float fLon, float fLat, float tLon, float tLat);
+    int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
+
+    void viaRoute();
+    int getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutegeom_t **result);
+
+    std::vector<dataroutegeom_t> routeGeometry() { return mRouteGeomerty; }
+    std::vector<datarouteinst_t> routeInstructions() { return mRouteInstructions; }
+
+    float totalDistance() const { return mTotalDistance; }
+    float totalTime() const { return mTotalTime; }
+
+    void parseOSRM(const char* resp);
 
 private:
     // Private variables
     std::string mBaseURL = "http://localhost:5000/viaroute";
     int mTotalDistance = -1;
     int mTotalTime = -1;
-    bool mGeometry = true;
+    bool mReqGeometry = true;
     bool mInstructions = true;
     bool mCompression = false;
     bool mRouteAlt = false;
+    std::string mRouteJSON;
+    std::vector<dataviaroute_t> mRoutePoints;
+    std::vector<dataroutegeom_t> mRouteGeomerty;
+    std::vector<datarouteinst_t> mRouteInstructions;
+
     // Private methods and functions
 
 };
