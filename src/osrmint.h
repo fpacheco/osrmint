@@ -19,23 +19,10 @@ PG_MODULE_MAGIC;
 #include "types.h"
 
 // From C++ wrapper (osrmint_wrapper.cpp)
-extern int c_wrapper_route(
-    datapoint_t *datapoints,
-    char *baseURL,
-    int ndatapoints,
-    datadt_t **result,
-    int *result_count,
-    char **err_msg_out
-);
+extern int c_wrapper_route(datapoint_t *datapoints,char *baseURL,int ndatapoints,
+    datadt_t **result,int *result_count,char **err_msg_out);
 
-extern int c_wrapper_viaroute(
-    dataviaroute_t *datapoints,
-    char *baseURL,
-    int ndatapoints,
-    dataroutejson_t **result,
-    int *result_count,
-    char **err_msg
-);
+extern int c_wrapper_viaroute(dataviaroute_t *datapoints, char *baseURL, int ndatapoints, char** result);
 
 // Definicion de funciones
 // Distancia entre puntos

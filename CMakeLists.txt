@@ -130,3 +130,8 @@ set(TEST1_SOURCE_FILES "./tests/test1.cpp" "./src/osrmcurlpp.cpp")
 add_executable(test1 ${TEST1_SOURCE_FILES})
 include_directories("${CMAKE_SOURCE_DIR}/src" ${CURL_INCLUDE_DIRS} )
 target_link_libraries(test1 ${CURL_LIBRARIES} "curlpp")
+
+set(TESTVR_SOURCE_FILES "./tests/testvr.cpp" "./src/osrmcurlpp.cpp")
+add_executable(testvr ${TESTVR_SOURCE_FILES})
+include_directories("${CMAKE_SOURCE_DIR}/src" ${CURL_INCLUDE_DIRS} )
+target_link_libraries(testvr ${CURL_LIBRARIES} "curlpp")

@@ -16,11 +16,6 @@ int fetch_dataviaroute_columns( SPITupleTable *tuptable,
 void fetch_dataviaroute( HeapTuple *tuple, TupleDesc *tupdesc,
                              dataviaroute_columns_t *columns, dataviaroute_t *data );
 
-int viaroute(
-    char *dataviaroute_sql,
-    char *baseURL,
-    dataroutejson_t **result,
-    int *result_count,
-    char **err_msg_out);
+int viaroute(char* dataviaroute_sql, char* baseURL, char** result);
 
 #endif // OSRMINTVIAROUTE_H

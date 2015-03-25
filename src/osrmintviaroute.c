@@ -91,12 +91,7 @@ void fetch_dataviaroute( HeapTuple *tuple, TupleDesc *tupdesc,
 /****************************************************************************/
 /*                           viaroute                                       */
 /****************************************************************************/
-int viaroute(
-    char *dataviaroute_sql,
-    char *baseURL,
-    dataroutejson_t **result,
-    int *result_count,
-    char **err_msg_out) {
+int viaroute(char *dataviaroute_sql, char *baseURL, char** result) {
 
     int SPIcode;
     SPIPlanPtr SPIplan;
@@ -113,7 +108,7 @@ int viaroute(
     char *err_msg=NULL;
     int ret = -1;
 
-    DBG( "Enter route\n" );
+    DBG( "Connecting\n" );
 
     SPIcode = SPI_connect();
 
@@ -136,7 +131,7 @@ int viaroute(
                                         true ) ) == NULL ) {
         elog( ERROR, "route: SPI_cursor_open('%s') returns NULL",
               dataviaroute_sql );
-        return -1;
+        return finish( SPIcode, ret );
     }
 
     while ( moredata == TRUE ) {
@@ -145,7 +140,7 @@ int viaroute(
 
         if ( SPI_tuptable == NULL ) {
             elog( ERROR, "SPI_tuptable is NULL" );
-            return finish( SPIcode, -1 );
+            return finish( SPIcode, ret );
         }
 
         if ( dataviaroute_columns.seq == -1 ) {
@@ -192,27 +187,18 @@ int viaroute(
         structs so call the C++ wrapper and solve the problem.
     **********************************************************************/
 
-    DBG( "Calling route\n" );
+    DBG( "c_wrapper_viaroute for %i records\n", dataviaroute_count );
+
     ret = c_wrapper_viaroute(
         dataviaroutes,
         baseURL,
         dataviaroute_count,
-        result,                 // JSON
-        result_count,           // wil be 0 or 1!
-        &err_msg
+        result
     );
 
-    /*
-    DBG( "osrmint_route returned status: %i", ret );
-    DBG( "result_count = %i", *result_count );
-
-    DBG( "Message received from inside:" );
-    DBG( "%s", err_msg );
-    */
-
-    if ( ret < 0 ) {
+    if ( ret<0 ) {
         ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
-                          errmsg( "Error finding route: %s:\n", err_msg ) ) );
+                          errmsg( "Error finding route from OSRM. Check sql and URL\n") ) );
     }
 
     pfree(dataviaroutes);

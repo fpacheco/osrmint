@@ -44,7 +44,7 @@ public:
     int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
 
     void viaRoute();
-    int getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutejson_t **result);
+    int getViaRoute(dataviaroute_t *datapoints, int ndatapoints, char **result);
 
     std::vector<dataroutegeom_t> routeGeometry() { return mRouteGeomerty; }
     std::vector<datarouteinst_t> routeInstructions() { return mRouteInstructions; }

@@ -51,41 +51,20 @@ int c_wrapper_route(
     return EXIT_SUCCESS;
 }
 
-int c_wrapper_viaroute(
-    dataviaroute_t *datapoints,
-    char *baseURL,
-    int ndatapoints,
-    dataroutejson_t **result,
-    int *result_count,
-    char **err_msg
-) {
+int c_wrapper_viaroute(dataviaroute_t *datapoints, char *baseURL, int ndatapoints, char** result) {
 
     try {
         OSRMCurlpp* router = new OSRMCurlpp();
         router->setBaseURL(baseURL);
         if (router->checkCon()) {
-            if (router->getViaRoute(datapoints, ndatapoints, result)>=0) {
-                *result_count = 1;
-            } else {
-                *result_count = 0;
-                *err_msg = strdup( "Something was wrong!" );
-                return -10;
-            }
-        } else {
-            *result_count = 0;
-            *err_msg = strdup( "Wrong port or IP un URL!" );
-            return -20;
+            return router->getViaRoute(datapoints, ndatapoints, result);
         }
     } catch ( std::exception &e ) {
-        *err_msg = strdup( e.what() );
-        return -30;
+        std::cout << e.what() << std::endl;
     } catch ( ... ) {
-        *err_msg = strdup( "Caught unknown expection!" );
-        return -40;
+        std::cout << "Caught unknown expection!" << std::endl;
     }
-
-    *err_msg = (char *)0;
-    return EXIT_SUCCESS;
+    return -1;
 }
 
 

@@ -17,4 +17,7 @@
 int finish( int code, int ret );
 char *text2char( text *in );
 
+text* cstring2text(const char *cstring);
+char* text2cstring(const text *textptr);
+
 #endif // OSRMINTUTILS_H

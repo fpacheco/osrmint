@@ -140,10 +140,9 @@ void OSRMCurlpp::viaRoute() {
 
 }
 
-int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutejson_t **result) {
+int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, char **result) {
+
     try {
-        // Allocate memory for result
-        *result = ( dataroutejson_t * ) malloc( 1 * sizeof( dataroutejson_t ) );
         // Curlpp declarations
         curlpp::Cleanup cleaner;
         curlpp::Easy request;
@@ -194,7 +193,7 @@ int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, datarou
             //
             try {
                 request.perform();
-                std::cout << "Response: " << response.str() << std::endl;
+                // std::cout << "Response: " << response.str() << std::endl;
                 // Parse response in json
                 parseOSRM( response.str().c_str() );
                 /*
@@ -207,7 +206,11 @@ int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, datarou
                 }
                 */
                 // Set result data
-                (*result)->cjson = strdup( response.str().c_str() );
+                int slen = response.str().length();
+                *result = ( char * ) malloc( (slen+1) * sizeof( char ) );
+                *result = strdup( response.str().c_str() );
+                std::cout << "Result: " << result << std::endl;
+                return 0;
             } catch ( curlpp::LogicError & e ) {
                 std::cout << "curlpp LogicError: " << e.what() << std::endl;
             } catch ( curlpp::RuntimeError & e ) {
@@ -215,15 +218,14 @@ int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, datarou
             }
             // Vacio el reponse
             response.str(std::string());
-     }
-        return 0;
+        }
     } catch ( curlpp::LogicError & e ) {
       std::cout << e.what() << std::endl;
-      return -1;
+
     } catch ( curlpp::RuntimeError & e ) {
       std::cout << e.what() << std::endl;
-      return -2;
     }
+    return -1;
 }
 
 void OSRMCurlpp::parseOSRM(const char* resp){
@@ -233,7 +235,6 @@ void OSRMCurlpp::parseOSRM(const char* resp){
     mRouteJSON = "";
 
     rapidjson::Document jsonDoc;
-    //std::string str( replyContent.begin(),replyContent.end() );
 
     if ( jsonDoc.Parse( resp ).HasParseError() )
     {
