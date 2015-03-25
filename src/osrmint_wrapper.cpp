@@ -14,8 +14,8 @@ extern "C" {
   * @todo: document this function
   */
 int c_wrapper_route(
-    char *baseURL,
     datapoint_t *datapoints,
+    char *baseURL,
     int ndatapoints,
     datadt_t **result,
     int *result_count,
@@ -26,19 +26,25 @@ int c_wrapper_route(
         OSRMCurlpp* router = new OSRMCurlpp();
         router->setBaseURL(baseURL);
         if (router->checkCon()) {
-            router->getRoute(datapoints, ndatapoints, result);
-            *result_count = ndatapoints;
+            if (router->getRoute(datapoints, ndatapoints, result)>=0) {
+                *result_count = ndatapoints;
+            } else {
+                *result_count = 0;
+                *err_msg = strdup( "Something was wrong!" );
+                return -10;
+            }
+
         } else {
             *result_count = 0;
             *err_msg = strdup( "Wrong port or IP un URL!" );
-            return -10;
+            return -20;
         }
     } catch ( std::exception &e ) {
         *err_msg = strdup( e.what() );
-        return -20;
+        return -30;
     } catch ( ... ) {
         *err_msg = strdup( "Caught unknown expection!" );
-        return -20;
+        return -40;
     }
 
     *err_msg = (char *)0;
@@ -46,10 +52,10 @@ int c_wrapper_route(
 }
 
 int c_wrapper_viaroute(
-    char *baseURL,
     dataviaroute_t *datapoints,
+    char *baseURL,
     int ndatapoints,
-    dataroutegeom_t **result,
+    dataroutejson_t **result,
     int *result_count,
     char **err_msg
 ) {
@@ -58,19 +64,24 @@ int c_wrapper_viaroute(
         OSRMCurlpp* router = new OSRMCurlpp();
         router->setBaseURL(baseURL);
         if (router->checkCon()) {
-            router->getViaRoute(datapoints, ndatapoints, result);
-            *result_count = ndatapoints;
+            if (router->getViaRoute(datapoints, ndatapoints, result)>=0) {
+                *result_count = 1;
+            } else {
+                *result_count = 0;
+                *err_msg = strdup( "Something was wrong!" );
+                return -10;
+            }
         } else {
             *result_count = 0;
             *err_msg = strdup( "Wrong port or IP un URL!" );
-            return -10;
+            return -20;
         }
     } catch ( std::exception &e ) {
         *err_msg = strdup( e.what() );
-        return -20;
+        return -30;
     } catch ( ... ) {
         *err_msg = strdup( "Caught unknown expection!" );
-        return -20;
+        return -40;
     }
 
     *err_msg = (char *)0;

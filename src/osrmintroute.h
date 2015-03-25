@@ -16,4 +16,11 @@ int fetch_datapoint_columns( SPITupleTable *tuptable,
 void fetch_datapoint( HeapTuple *tuple, TupleDesc *tupdesc,
                              datapoint_columns_t *columns, datapoint_t *data );
 
+int route(
+    char *datapoint_sql,
+    char *baseURL,
+    datadt_t **result,
+    int *result_count,
+    char **err_msg_out);
+
 #endif // OSRMINTROUTE_H

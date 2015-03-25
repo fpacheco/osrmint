@@ -18,10 +18,10 @@ PG_MODULE_MAGIC;
 
 #include "types.h"
 
-// From C++ wrapper
+// From C++ wrapper (osrmint_wrapper.cpp)
 extern int c_wrapper_route(
-    char *baseURL,
     datapoint_t *datapoints,
+    char *baseURL,
     int ndatapoints,
     datadt_t **result,
     int *result_count,
@@ -29,10 +29,10 @@ extern int c_wrapper_route(
 );
 
 extern int c_wrapper_viaroute(
-    char *baseURL,
     dataviaroute_t *datapoints,
+    char *baseURL,
     int ndatapoints,
-    dataroutegeom_t **result,
+    dataroutejson_t **result,
     int *result_count,
     char **err_msg
 );

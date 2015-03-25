@@ -140,14 +140,97 @@ void OSRMCurlpp::viaRoute() {
 
 }
 
-int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutegeom_t **result) {
+int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutejson_t **result) {
+    try {
+        // Allocate memory for result
+        *result = ( dataroutejson_t * ) malloc( 1 * sizeof( dataroutejson_t ) );
+        // Curlpp declarations
+        curlpp::Cleanup cleaner;
+        curlpp::Easy request;
+        std::stringstream response;
+        std::list<std::string> header;
+        //???
+        //curlpp::options::HttpGet();
+        // Headers
+        header.push_back("Content-Type: application/octet-stream");
+        request.setOpt(new curlpp::options::HttpHeader(header));
+        // UserAgent
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        // Verbose for debug
+        // request.setOpt(new curlpp::options::Verbose(true));
+        // Write resonse to string
+        request.setOpt( new curlpp::options::WriteStream( &response ) );
 
+        // Iterate thru datapoints
+        if (ndatapoints>0) {
+            std::ostringstream url;
+            url << mBaseURL << "?"
+                << "loc=" << datapoints[0].y << "," << datapoints[0].x;
+            for (int i = 1; i < ndatapoints; ++i) {
+                url << "&loc=" << datapoints[i].y << "," << datapoints[i].x;
+            }
+            if (mReqGeometry) {
+                url << "&geometry=true";
+            } else {
+                url << "&geometry=false";
+            }
+            if (mReqInstructions) {
+                url << "&instructions=true";
+            } else {
+                url << "&instructions=false";
+            }
+            if (mReqRouteAlt) {
+                url << "&alt=true";
+            } else {
+                url << "&alt=false";
+            }
+            if (mReqCompression) {
+                url << "&compression=true";
+            } else {
+                url << "&compression=false";
+            }
+            std::cout << "URL: " << url.str() << std::endl;
+            request.setOpt( new curlpp::options::Url(url.str()) );
+            //
+            try {
+                request.perform();
+                std::cout << "Response: " << response.str() << std::endl;
+                // Parse response in json
+                parseOSRM( response.str().c_str() );
+                /*
+                // Set result data
+                int slen = response.str().length();
+                char *res = (char*)malloc( (slen+1) * sizeof( char ) );
+                if (res == NULL) {
+                    std::cout << "Malloc failed." << std::endl;
+                    return -3;
+                }
+                */
+                // Set result data
+                (*result)->cjson = strdup( response.str().c_str() );
+            } catch ( curlpp::LogicError & e ) {
+                std::cout << "curlpp LogicError: " << e.what() << std::endl;
+            } catch ( curlpp::RuntimeError & e ) {
+                std::cout << "curlpp RuntimeError: " << e.what() << std::endl;
+            }
+            // Vacio el reponse
+            response.str(std::string());
+     }
+        return 0;
+    } catch ( curlpp::LogicError & e ) {
+      std::cout << e.what() << std::endl;
+      return -1;
+    } catch ( curlpp::RuntimeError & e ) {
+      std::cout << e.what() << std::endl;
+      return -2;
+    }
 }
 
 void OSRMCurlpp::parseOSRM(const char* resp){
 
     mTotalDistance = -1;
     mTotalTime = -1;
+    mRouteJSON = "";
 
     rapidjson::Document jsonDoc;
     //std::string str( replyContent.begin(),replyContent.end() );

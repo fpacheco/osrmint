@@ -7,7 +7,7 @@
 
 #define TUPLIMIT 1000
 
-/* by value */
+/************************************************************************/
 PG_FUNCTION_INFO_V1(osrmint_route);
 Datum osrmint_route(PG_FUNCTION_ARGS) {
 
@@ -20,6 +20,9 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
     char                *pmsg;
     int                  ret;
 
+    text*                   baseURL;
+    text*                   sql;
+
     // stuff done only on the first call of the function
     if ( SRF_IS_FIRSTCALL() ) {
         MemoryContext   oldcontext;
@@ -31,9 +34,16 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
         // switch to memory context appropriate for multiple function calls
         oldcontext = MemoryContextSwitchTo( funcctx->multi_call_memory_ctx );
 
+        sql = PG_GETARG_TEXT_P(0);
+        if (PG_NARGS()==1 || PG_ARGISNULL(2)) {
+            baseURL = "http://127.0.0.1:5000/viaroute";
+        } else {
+            baseURL = PG_GETARG_TEXT_P(1);
+        }
+
         ret = route(
-                    text2char( PG_GETARG_TEXT_P( 0 ) ), // baseURL
-                    text2char( PG_GETARG_TEXT_P( 1 ) ), // datapoint_sql
+                    text2char( sql ), // datapoint_sql
+                    text2char( baseURL ), // baseURL
                     &result,
                     &result_count,
                     &err_msg
@@ -58,24 +68,6 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
             ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
                               errmsg( "%s", pmsg ) ) );
         }
-
-        #ifdef OSRMINTDEBUG
-        /*
-        DBG( "   Result count: %i", result_count );
-
-        if ( ret >= 0 ) {
-            double total_time = 0.0;
-            int i;
-
-            for ( i = 0; i < result_count; i++ ) {
-                total_time += result[i].deltatime;
-        DBG("reult[%i] (seq,vid,nid,ntype,deltatime,cargo)=(%i,%i,%i,%i,%f,%f)",i,result[i].seq,result[i].vid,result[i].nid,result[i].ntype,result[i].deltatime,result[i].cargo);
-            }
-
-            DBG( "Total Travel Time: %f", total_time );
-        }
-        */
-        #endif
 
         // total number of tuples to be returned
         funcctx->max_calls = result_count;
@@ -108,8 +100,8 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
         Datum       *values;
         char        *nulls;
 
-        values = palloc( 6 * sizeof( Datum ) );
-        nulls = palloc( 6 * sizeof( bool ) );
+        values = palloc( 3 * sizeof( Datum ) );
+        nulls = palloc( 3 * sizeof( bool ) );
 
         values[0] = Int32GetDatum( result[call_cntr].id );
         nulls[0] = false;
@@ -137,18 +129,21 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
     }
 }
 
-/* by value */
+/************************************************************************/
 PG_FUNCTION_INFO_V1(osrmint_viaroute);
 Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
 
-    FuncCallContext     *funcctx;
-    int                  call_cntr;
-    int                  max_calls;
-    TupleDesc            tuple_desc;
-    datadt_t            *result;
-    char                *err_msg = NULL;
-    char                *pmsg;
-    int                  ret;
+    FuncCallContext         *funcctx;
+    int                     call_cntr;
+    int                     max_calls;
+    TupleDesc               tuple_desc;
+    dataroutejson_t         *result;
+    char                    *err_msg = NULL;
+    char                    *pmsg;
+    int                     ret;
+
+    text*                   baseURL;
+    text*                   sql;
 
     // stuff done only on the first call of the function
     if ( SRF_IS_FIRSTCALL() ) {
@@ -161,9 +156,16 @@ Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
         // switch to memory context appropriate for multiple function calls
         oldcontext = MemoryContextSwitchTo( funcctx->multi_call_memory_ctx );
 
+        sql = PG_GETARG_TEXT_P(0);
+        if (PG_NARGS()==1 || PG_ARGISNULL(2)) {
+            baseURL = "http://127.0.0.1:5000/viaroute";
+        } else {
+            baseURL = PG_GETARG_TEXT_P(1);
+        }
+
         ret = viaroute(
-                    text2char( PG_GETARG_TEXT_P( 0 ) ), // baseURL
-                    text2char( PG_GETARG_TEXT_P( 1 ) ), // dataviaroute_sql
+                    text2char( sql ),           // dataviaroute_sql
+                    text2char( baseURL ),       // baseURL
                     &result,
                     &result_count,
                     &err_msg
@@ -189,24 +191,6 @@ Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
                               errmsg( "%s", pmsg ) ) );
         }
 
-        #ifdef OSRMINTDEBUG
-        /*
-        DBG( "   Result count: %i", result_count );
-
-        if ( ret >= 0 ) {
-            double total_time = 0.0;
-            int i;
-
-            for ( i = 0; i < result_count; i++ ) {
-                total_time += result[i].deltatime;
-        DBG("reult[%i] (seq,vid,nid,ntype,deltatime,cargo)=(%i,%i,%i,%i,%f,%f)",i,result[i].seq,result[i].vid,result[i].nid,result[i].ntype,result[i].deltatime,result[i].cargo);
-            }
-
-            DBG( "Total Travel Time: %f", total_time );
-        }
-        */
-        #endif
-
         // total number of tuples to be returned
         funcctx->max_calls = result_count;
         funcctx->user_fctx = result;
@@ -229,7 +213,7 @@ Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
     call_cntr = funcctx->call_cntr;
     max_calls = funcctx->max_calls;
     tuple_desc = funcctx->tuple_desc;
-    result = ( datadt_t * ) funcctx->user_fctx;
+    result = ( dataroutejson_t * ) funcctx->user_fctx;
 
     if ( call_cntr < max_calls ) {
         // do when there is more left to send
@@ -238,15 +222,12 @@ Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
         Datum       *values;
         char        *nulls;
 
-        values = palloc( 6 * sizeof( Datum ) );
-        nulls = palloc( 6 * sizeof( bool ) );
+        values = palloc( 1 * sizeof( Datum ) );
+        nulls = palloc( 1 * sizeof( bool ) );
 
-        values[0] = Int32GetDatum( result[call_cntr].id );
+        values[0] = CStringGetTextDatum( result[call_cntr].cjson );
+        //values[0] = TextDatumGetCString( * result[call_cntr].cjson );
         nulls[0] = false;
-        values[1] = Float8GetDatum( result[call_cntr].tdist );
-        nulls[1] = false;
-        values[2] = Float8GetDatum( result[call_cntr].ttime );
-        nulls[2] = false;
 
         tuple = heap_form_tuple( tuple_desc, values, nulls );
 

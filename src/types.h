@@ -25,9 +25,11 @@ typedef struct dataviaroute_ {
   double y;     // Latitud from
 } dataviaroute_t;
 
+//#define CJSONTLENGHT 5000
+
 // Viaroute JSON
 typedef struct dataroutejson_ {
-  char* json;      // string with json result from OSRM
+  char* cjson;      // string with json result from OSRM
 } dataroutejson_t;
 
 // Route sequence structure
@@ -72,5 +74,11 @@ typedef struct dataviaroute_columns {
     int x;
     int y;
 } dataviaroute_columns_t;
+
+// Columnas de datos
+typedef struct dataroutejson_columns {
+    int cjson;
+} dataroutejson_columns_t;
+
 
 #endif // TYPES_H

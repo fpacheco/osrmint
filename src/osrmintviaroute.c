@@ -92,9 +92,9 @@ void fetch_dataviaroute( HeapTuple *tuple, TupleDesc *tupdesc,
 /*                           viaroute                                       */
 /****************************************************************************/
 int viaroute(
-    char *baseURL,
     char *dataviaroute_sql,
-    datadt_t **result,
+    char *baseURL,
+    dataroutejson_t **result,
     int *result_count,
     char **err_msg_out) {
 
@@ -194,11 +194,11 @@ int viaroute(
 
     DBG( "Calling route\n" );
     ret = c_wrapper_viaroute(
-        baseURL,
         dataviaroutes,
+        baseURL,
         dataviaroute_count,
-        result,
-        result_count,
+        result,                 // JSON
+        result_count,           // wil be 0 or 1!
         &err_msg
     );
 

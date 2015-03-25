@@ -31,20 +31,20 @@ public:
     void reqGeom(bool req) { mReqGeometry = req; }
     bool reqGeom() const { return mReqGeometry; }
 
-    void reqIns(bool req) { mInstructions = req; }
-    bool reqIns() const { return mInstructions; }
+    void reqIns(bool req) { mReqInstructions = req; }
+    bool reqIns() const { return mReqInstructions; }
 
-    void reqAlt(bool req) { mRouteAlt = req; }
-    bool reqAlt() const { return mRouteAlt; }
+    void reqAlt(bool req) { mReqRouteAlt = req; }
+    bool reqAlt() const { return mReqRouteAlt; }
 
-    void reqComp(bool req) { mCompression = req; }
-    bool reqComp() const { return mCompression; }
+    void reqComp(bool req) { mReqCompression = req; }
+    bool reqComp() const { return mReqCompression; }
 
     void route(float fLon, float fLat, float tLon, float tLat);
     int getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **result);
 
     void viaRoute();
-    int getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutegeom_t **result);
+    int getViaRoute(dataviaroute_t *datapoints, int ndatapoints, dataroutejson_t **result);
 
     std::vector<dataroutegeom_t> routeGeometry() { return mRouteGeomerty; }
     std::vector<datarouteinst_t> routeInstructions() { return mRouteInstructions; }
@@ -60,11 +60,11 @@ private:
     int mTotalDistance = -1;
     int mTotalTime = -1;
     bool mReqGeometry = true;
-    bool mInstructions = true;
-    bool mCompression = false;
-    bool mRouteAlt = false;
-    std::string mRouteJSON;
+    bool mReqInstructions = true;
+    bool mReqCompression = false;
+    bool mReqRouteAlt = false;
     std::vector<dataviaroute_t> mRoutePoints;
+    std::string mRouteJSON="";
     std::vector<dataroutegeom_t> mRouteGeomerty;
     std::vector<datarouteinst_t> mRouteInstructions;
 

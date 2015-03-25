@@ -80,8 +80,8 @@ void fetch_datapoint( HeapTuple *tuple, TupleDesc *tupdesc,
 /*                           route                                          */
 /****************************************************************************/
 int route(
-    char *baseURL,
     char *datapoint_sql,
+    char *baseURL,
     datadt_t **result,
     int *result_count,
     char **err_msg_out) {
@@ -182,8 +182,8 @@ int route(
 
     DBG( "Calling route\n" );
     ret = c_wrapper_route(
-        baseURL,
         datapoints,
+        baseURL,
         datapoint_count,
         result,
         result_count,
