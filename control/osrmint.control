@@ -2,5 +2,6 @@
 comment = 'OSRM routes via TCP/IP from PostgreSQL.'
 default_version = '0.1'
 encoding = 'UTF8'
+requires = 'postgis'
 module_pathname = '$libdir/osrmint-0.1'
 relocatable = true
