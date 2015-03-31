@@ -1,3 +1,260 @@
+-- DROP TABLE route;
+CREATE TABLE route
+(
+  id serial NOT NULL,
+  ncorrida text NOT NULL,
+  observaciones text,
+  dt timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT route_pkey PRIMARY KEY (id),
+  CONSTRAINT route_ncorrida_key UNIQUE (ncorrida)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route
+  OWNER TO postgres;
+GRANT ALL ON TABLE route TO postgres;
+GRANT SELECT, INSERT ON TABLE route TO desa;
+
+-- DROP TABLE route_vrptools;
+CREATE TABLE route_vrptools
+(
+  id serial NOT NULL,
+  routeid integer,
+  seq integer,
+  vehicle_id integer,
+  node_id integer,
+  node_type integer,
+  delta_time float,
+  cargo integer,
+  geom geometry,
+  dt timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT route_vrptools_pkey PRIMARY KEY (id),
+  CONSTRAINT route_vrptools_routeid_fkey FOREIGN KEY (routeid)
+      REFERENCES route (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE  
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route_vrptools
+  OWNER TO postgres;
+GRANT ALL ON TABLE route_vrptools TO postgres;
+GRANT SELECT, INSERT ON TABLE route_vrptools TO desa;
+
+
+--DROP TABLE route_json;
+CREATE TABLE route_json
+(
+  id serial NOT NULL,
+  routeid integer,
+  vehic integer,  
+  rjson json,
+  CONSTRAINT route_json_pkey PRIMARY KEY (id),
+  CONSTRAINT route_json_routeid_fkey FOREIGN KEY (routeid)
+      REFERENCES route (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route_json
+  OWNER TO postgres;
+GRANT ALL ON TABLE route_json TO postgres;
+GRANT SELECT, INSERT ON TABLE route_json TO desa;
+
+
+-- DROP TABLE route_point;
+CREATE TABLE route_point
+(
+  id serial NOT NULL,
+  rjid integer NOT NULL,
+  geom geometry,
+  CONSTRAINT route_point_pkey PRIMARY KEY (id),
+  CONSTRAINT route_point_rjid_fkey FOREIGN KEY (rjid)
+      REFERENCES route_json (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route_point
+  OWNER TO postgres;
+GRANT ALL ON TABLE route_point TO postgres;
+GRANT SELECT, INSERT ON TABLE route_point TO desa;
+
+
+-- DROP TABLE route_line;
+CREATE TABLE route_line
+(
+  id serial NOT NULL,
+  rjid integer NOT NULL,
+  geom geometry,
+  CONSTRAINT route_line_pkey PRIMARY KEY (id),
+  CONSTRAINT route_line_rjid_fkey FOREIGN KEY (rjid)
+      REFERENCES route_json (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route_line
+  OWNER TO postgres;
+GRANT ALL ON TABLE route_line TO postgres;
+GRANT SELECT, INSERT ON TABLE route_line TO desa;
+
+
+-- DROP TABLE route_instruction;
+CREATE TABLE route_instruction
+(
+  id serial NOT NULL,
+  rjid integer NOT NULL,
+  seq integer,                -- El orden de la ruta 
+  dd  text,                   -- 0: Direccion de sentido (10 = salida, 9 = Punto inermedio de la ruta!!, 15 = llegamos!!)
+  wname text,                 -- 1: Nombre de la calle
+  tlong integer,              -- 2: Distancia en metros
+  ttime integer,              -- 4: Tiempo en segundos
+  azim float,                 -- 7: Azimut
+  CONSTRAINT route_instruction_pkey PRIMARY KEY (id),
+  CONSTRAINT route_instruction_rjid_fkey FOREIGN KEY (rjid)
+      REFERENCES route_json (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE route_instruction
+  OWNER TO postgres;
+GRANT ALL ON TABLE route_instruction TO postgres;
+GRANT SELECT, INSERT ON TABLE route_instruction TO desa;
+
+
+-- Creo una rueva corrida
+CREATE OR REPLACE FUNCTION new_route(
+    nomcorrida text,    -- Nombre de la corrida
+    obs text            -- Observacioens de la corrida
+) RETURNS integer AS
+$BODY$
+DECLARE
+    id integer;
+BEGIN
+    -- Insertar
+    EXECUTE format('INSERT INTO route(ncorrida,observaciones) VALUES(%L,%L)', nomcorrida, obs);
+    EXECUTE format('SELECT id FROM route WHERE ncorrida=%L AND observaciones=%L', nomcorrida, obs) INTO id;
+    RETURN id;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+
+-- Para las rutas
+CREATE OR REPLACE FUNCTION update_routes(
+    nomcorrida text,    -- Nombre de la corrida
+    url text DEFAULT 'http://localhost:5000/viaroute'
+) RETURNS void AS
+$BODY$
+DECLARE
+    ln integer;
+    ssql text;
+    lns integer[]; 
+    i integer;
+    routeid integer;
+    tmpid integer;
+    tmpjson json;
+BEGIN
+    --RAISE NOTICE 'nomcorrida: %', nomcorrida;
+    --RAISE NOTICE 'nomtabla: %', nomtabla;
+    --RAISE NOTICE 'url: %', url;
+    -- encontrar id de la ruta
+    EXECUTE format('SELECT id FROM route WHERE ncorrida = %L', nomcorrida) INTO routeid;
+    -- Correr vrptools e insertar 
+    EXECUTE 'INSERT INTO route_vrptools(route_id, seq, vehicle_id, node_id, node_type, delta_time, cargo)
+    (
+        SELECT '|| routeid ||', v.*
+        FROM vrp_trashCollection(
+        ''select id, x, y, open, close, service, demand, street_id from containers'',
+        ''select id, x, y, tw_open as open, tw_close as close from other_locs'',
+        ''select vid, start_id, dump_id, end_id, cast(capacity as float), cast(dump_service_time as float) as dumpservicetime, tw_open as starttime, tw_close as endtime from vehicles'',
+        ''select from_id, to_id, ttime from tiempos''
+        )
+    )';
+    -- Update de geom     
+    EXECUTE format('UPDATE route_vrptools
+        SET geom = gg.geom
+        FROM
+            (
+                SELECT *
+                FROM
+                (
+                    -- de contenedores
+                    (
+                        SELECT v.node_id, c.geom
+                        FROM route_vrptools v, contenedores_geom c
+                        WHERE v.node_id=c.id AND v.routeid=%L
+                    )
+                    UNION
+                    -- de other_locs
+                    (
+                        SELECT v.node_id, o.geom
+                        FROM route_vrptools v, other_locs o
+                        WHERE v.node_id=o.id AND v.routeid=%L
+                    )
+                ) AS g
+            ) AS gg
+        WHERE
+            gg.node_id = vrptools_majusamat201503271226.node_id', routeid, routeid);
+
+    -- Los vehiculos de esa corrida al array
+    EXECUTE format('SELECT ARRAY(SELECT DISTINCT vehicle_id FROM route_vrptools WHERE routeid=%L)', routeid) INTO lns;
+    -- loop para todos los vehiculos de esta corrida
+    FOR i IN array_lower(lns, 1) .. array_upper(lns, 1)
+    LOOP    
+        -- inserto el json de esta linea y esta corrida (ORDER BY v.seq!!!!!!)
+        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM route_vrptools v WHERE v.vehicle_id='|| lns[i] ||' ORDER BY v.seq;';
+        -- RAISE NOTICE 'ssql: %', ssql;
+        EXECUTE 'INSERT INTO route_json(ncorrida, ntabla, vehic, rjson)
+        (
+            SELECT '|| routeid ||','|| lns[i] ||', CAST(r.cjson AS json)
+            FROM
+                ( SELECT * FROM osrmint_viaroute('''||ssql||''','''||url||''') ) AS r
+        )';
+
+        -- obtengo datos necesarios 
+        EXECUTE format('SELECT id FROM route_json WHERE routeid=%L AND vehic=%L', routeid, lns[i]) INTO tmpid;
+        -- RAISE NOTICE 'tmpid: %', tmpid;
+        EXECUTE format('SELECT rjson FROM route_json WHERE routeid=%L AND vehic=%L', routeid, lns[i]) INTO tmpjson;
+        -- RAISE NOTICE 'tmpjson: %', tmpjson;
+        
+        -- inserto los puntos de la ruta
+        EXECUTE 'INSERT INTO route_point(rjid, geom)
+        (
+            SELECT '|| tmpid ||', r.geom
+            FROM
+                ( SELECT * FROM osrmint_getRoutePoints('''||tmpjson||''') ) AS r
+        )';
+
+        -- inserto la linea de la ruta
+        EXECUTE 'INSERT INTO route_line(rjid, geom)
+        (
+            SELECT '|| tmpid ||', r.geom
+            FROM
+                ( SELECT * FROM osrmint_getRouteLine('''||tmpjson||''') ) AS r
+        )';
+
+        -- inserto las instrucciones de la ruta
+        EXECUTE 'INSERT INTO route_instruction(rjid, seq, dd, wname, tlong, ttime, azim)
+        (
+            SELECT '|| tmpid ||', r.*
+            FROM
+                ( SELECT * FROM osrmint_getRouteInstructions('''||tmpjson||''') ) AS r
+        )';
+        -- fin de esta linea ... a la siguiente
+    END LOOP;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+
 INSERT INTO containers(id,x,y,demand) (
      SELECT
      id,
@@ -123,131 +380,5 @@ INSERT INTO vrptools_json(nombre, camion, cjson)
         
     (SELECT DISTINCT vehicle_id FROM majusamat201503271226)
 )
- 
 
 
-
-function turn_function (angle)
-    -- compute turn penalty as angle^2, with a left/right bias
-    k = turn_penalty/(90.0*90.0)
-    if angle>=0 then
-        return angle*angle*k/turn_bias
-    end
-    return angle*angle*k*turn_bias
-end
-
-def turn_function (angle):
-    k = turn_penalty/(90.0*90.0)
-    if angle>=0:
-        return angle*angle*k/turn_bias
-    return angle*angle*k*turn_bias
-
--- function turn_function (angle)
---   -- print ("called at angle " .. angle )
---   local index = math.abs(math.floor(angle/10+0.5))+1 -- +1 'coz LUA starts as idx 1
---   local penalty = turn_cost_table[index]
---   -- print ("index: " .. index .. ", bias: " .. penalty )
---   return penalty
--- end
-
-
-
--- Para las rutas
-CREATE OR REPLACE FUNCTION update_routes(nomcorrida text, nomtabla regclass, url text DEFAULT 'http://localhost:5000/viaroute')
-  RETURNS void AS
-$BODY$
-DECLARE
-    ln integer;
-    ssql text;
-    lns integer[]; 
-    i integer;
-    tmpid integer;
-    tmpjson json;
-BEGIN
-    --RAISE NOTICE 'nomcorrida: %', nomcorrida;
-    --RAISE NOTICE 'nomtabla: %', nomtabla;
-    --RAISE NOTICE 'url: %', url;
-    -- Los vehiculos al array
-    EXECUTE 'SELECT ARRAY(SELECT DISTINCT vehicle_id FROM ' || nomtabla || ')' INTO lns;
-    -- loop para todos los vehiculos de esta corrida    
-    FOR i IN array_lower(lns, 1) .. array_upper(lns, 1)
-    LOOP    
-        -- inserto el json
-        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM '|| nomtabla ||' v WHERE v.vehicle_id='|| lns[i] ||' ORDER BY v.seq;';
-        RAISE NOTICE 'ssql: %', ssql;
-        EXECUTE 'INSERT INTO route_json(ncorrida, ntabla, vehic, rjson)
-        (
-            SELECT '''|| nomcorrida ||''','''|| nomtabla ||''','|| lns[i] ||', CAST(r.cjson AS json)
-            FROM
-                ( SELECT * FROM osrmint_viaroute('''||ssql||''','''||url||''') ) AS r
-        )';
-
-        -- inserto los puntos de la ruta
-        EXECUTE format('SELECT id FROM route_json WHERE ncorrida=%L AND ntabla=%L AND vehic=%L', nomcorrida, nomtabla, lns[i]) INTO tmpid;
-        RAISE NOTICE 'tmpid: %', tmpid;
-        EXECUTE format('SELECT rjson FROM route_json WHERE ncorrida=%L AND ntabla=%L AND vehic=%L', nomcorrida, nomtabla, lns[i]) INTO tmpjson;
-        RAISE NOTICE 'tmpjson: %', tmpjson;
-        EXECUTE 'INSERT INTO route_point(routeid, geom)
-        (
-            SELECT '|| tmpid ||', r.geom
-            FROM
-                ( SELECT * FROM osrmint_getRoutePoints('''||tmpjson||''') ) AS r
-        )';
-
-        -- inserto la linea de la ruta
-
-        -- inserto las instrucciones de la ruta
-        
-    END LOOP;
-END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def turn_function2 (angle):
-    index = abs((angle/10+0.5))+1
-    penalty = turn_cost_table[index]
-    return penalty
-
-http://127.0.0.1:5000/viaroute?loc=-34.87180,-56.13643&loc=-34.87224,-56.13716&loc=-34.87255&-56.13691
-http://127.0.0.1:5000/viaroute?loc=-34.87180,-56.13643&loc=-34.87224,-56.13716&loc=-34.87255,-56.13691&alt=true&geometry=true&compression=false&instructions=true
-1 - 60
-
-[
-    ["10","Doctor Silvestre Pérez",65,0,14,"64m","SE",129,1],
-    ["3","Avenida 8 de Octubre",101,1,15,"101m","SW",225,1],
-    ["3","General Félix Laborde",79,2,6,"79m","NW",326,1],
-    ["9","General Félix Laborde",42,3,2,"41m","SE",145,1],
-    ["15","",0,4,0,"0m","N",0]
-]
-
-[
-    ["10","Doctor Silvestre Pérez",65,0,15,"64m","SE",129,1],
-    ["3","Avenida 8 de Octubre",101,1,15,"101m","SW",225,1],
-    ["3","General Félix Laborde",79,2,6,"79m","NW",326,1],
-    ["9","General Félix Laborde",27,3,17,"26m","NW",326,1],
-    ["7","Joanico",137,4,19,"136m","SW",234,1],
-    ["7","Lindoro Forteza",254,5,30,"253m","SE",146,1],
-    ["7","José Antonio Cabrera",137,7,19,"137m","NE",52,1],
-    ["7","General Félix Laborde",179,9,16,"178m","NW",325,1],
-    ["15","",0,11,0,"0m","N",0]
-]
