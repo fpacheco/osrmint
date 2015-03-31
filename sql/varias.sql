@@ -308,12 +308,12 @@ BEGIN
     -- Update node_distance solo con containers
     RAISE NOTICE '1 - Actualizando node_distance';
     DELETE FROM node_distance;
-    PERFORM SELECT update_node_distance();
+    PERFORM update_node_distance();
 
     -- Update tiempos
     RAISE NOTICE '2 - Actualizando node_osrm_data';
     DELETE FROM node_osrm_data;
-    PERFORM SELECT update_node_osrm_data();
+    PERFORM update_node_osrm_data();
     
     -- encontrar id de la ruta
     EXECUTE format('SELECT id FROM route WHERE ncorrida = %L', nomcorrida) INTO routeid;
