@@ -72,10 +72,11 @@ CREATE OR REPLACE FUNCTION osrmint_getRouteLine(
     OUT rid integer,                        -- Identificador de los puntos
     OUT seq integer,                        -- Orden
     OUT calle text,                         -- instruccion
+    OUT pseq integer,                       -- sequencia del punto de la ruta
     OUT osrmlong float,                     -- longitud de la linea
     OUT osrmtime float,                     -- osrm time
     OUT osrmazim float,                     -- osrm time
-    OUT osrmfisint boolean,                  -- Node from is intermediate point in osrm route
+    OUT osrmfisint boolean,                 -- Node from is intermediate point in osrm route
     OUT gacumdist float,                    -- distancia acumulada
     OUT geom geometry                       -- Geometria de salida    
 ) RETURNS SETOF RECORD AS
@@ -91,6 +92,7 @@ DECLARE
   Yt float;                                 -- Yto
   ncid integer;
   j integer;
+  k integer;
   acumdist float;
 BEGIN
     -- OJO: length(sjson)!=length(ijson) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -99,23 +101,29 @@ BEGIN
     ijson := json_osrm::json->'route_instructions';
     alen := json_array_length(sjson)-2;
     j := 0;
+    k := 1;
     acumdist := 0;
     FOR i in 0 .. alen LOOP
         rid := routeid;
         seq := i+1;
         ncid := CAST( ijson->j->>3 AS integer);
+        pseq := NULL;
         osrmlong := NULL;
         osrmtime := NULL;
         osrmazim := NULL;
-        osrmfisint := FALSE;        
+        osrmfisint := FALSE;
         IF i >= ncid THEN
-            calle := ijson->j->>1;                                      -- Nombre de la calle
+            calle := ijson->j->>1;                                      -- Nombre de la calle            
             osrmlong := CAST(ijson->j->>2 AS float);                    -- En metros
             osrmtime := CAST(ijson->j->>4 AS float);                    -- En segundos
             osrmazim := CAST(ijson->j->>7 AS float);                    -- En grados
-            IF CAST( left(ijson->j->>0, 1) AS integer) = 9 THEN         -- Punto intermedio de ruta
-                osrmfisint := TRUE;
+            IF (CAST( left(ijson->j->>0, 1) AS integer) = 9) OR (CAST( left(ijson->j->>0, 2) AS integer) = 10) OR (CAST( left(ijson->j->>0, 2) AS integer) = 15) THEN
+                pseq := k;                                              -- Secuencia de levante de punto
+                k := k+1;
             END IF;
+            IF CAST( left(ijson->j->>0, 1) AS integer) = 9 THEN         -- Punto intermedio de ruta                
+                osrmfisint := TRUE;                
+            END IF;            
             j := j + 1;
         ELSE
             calle := ijson->(j-1)->>1;                                  -- Nombre de la calle        
