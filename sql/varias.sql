@@ -364,7 +364,8 @@ BEGIN
     FOR i IN array_lower(lns, 1) .. array_upper(lns, 1)
     LOOP    
         -- inserto el json de esta linea y esta corrida (ORDER BY v.seq!!!!!!)
-        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM route_vrptools v WHERE v.vehicle_id='|| lns[i] ||' ORDER BY v.seq;';
+        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM route_vrptools v WHERE v.vehicle_id='|| lns[i] ||' AND v.routeid='|| routeid ||' ORDER BY v.seq;';
+
         -- RAISE NOTICE 'ssql: %', ssql;
         EXECUTE 'INSERT INTO route_json(routeid, vehic, rjson)
         (
