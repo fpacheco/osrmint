@@ -1,5 +1,7 @@
 #!/bin/sh
-echo "Instalando"
-sudo cp build/osrmint-0.1.so /usr/lib/postgresql/9.3/lib/
-sudo cp sql/osrmint.sql /usr/share/postgresql/9.3/extension/osrmint--0.1.sql
-sudo cp control/osrmint.control /usr/share/postgresql/9.3/extension/
+echo "Instalando osrmint en $(pg_config --version)"
+SHARE_DIR=$(pg_config --sharedir)
+PKGLIB_DIR=$(pg_config --pkglibdir)
+sudo cp build/osrmint-0.1.so $PKGLIB_DIR/
+sudo cp sql/osrmint.sql $SHARE_DIR/extension/osrmint--0.1.sql
+sudo cp control/osrmint.control $SHARE_DIR/extension/
