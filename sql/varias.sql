@@ -324,9 +324,9 @@ BEGIN
     sqlol := 'select id, x, y, tw_open as open, tw_close as close from other_locs';
     sqlve := 'select vid, start_id, dump_id, end_id, cast(capacity as float), cast(dump_service_time as float) as dumpservicetime, tw_open as starttime, tw_close as endtime from vehicles';
     sqlt := 'select nfrom AS from_id, nto AS to_id, osrmtime AS ttime from node_osrm_data';    
-    EXECUTE format('INSERT INTO route_vrptools(route_id, seq, vehicle_id, node_id, node_type, delta_time, cargo)
+    EXECUTE format('INSERT INTO route_vrptools(routeid, seq, vehicle_id, node_id, node_type, delta_time, cargo)
     (
-        SELECT '|| routeid ||', v.*
+        SELECT '|| routeid ||', *
         FROM vrp_trashCollection(%L, %L, %L, %L)
     )',sqlcont,sqlol,sqlve, sqlt);
     
@@ -354,7 +354,7 @@ BEGIN
                 ) AS g
             ) AS gg
         WHERE
-            gg.node_id = v.node_id', routeid, routeid);
+            gg.node_id = route_vrptools.node_id', routeid, routeid);
 
     -- Los vehiculos de esa corrida al array
     EXECUTE format('SELECT ARRAY(SELECT DISTINCT vehicle_id FROM route_vrptools WHERE routeid=%L)', routeid) INTO lns;
@@ -364,7 +364,7 @@ BEGIN
     FOR i IN array_lower(lns, 1) .. array_upper(lns, 1)
     LOOP    
         -- inserto el json de esta linea y esta corrida (ORDER BY v.seq!!!!!!)
-        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM route_vrptools v WHERE v.vehicle_id='|| lns[i] ||' ORDER BY v.seq;';
+        ssql := 'SELECT v.seq, v.node_id as nodeid, ST_X(v.geom) as x, ST_Y(v.geom) AS y FROM route_vrptools v WHERE v.vehicle_id='|| lns[i] ||' AND v.routeid='|| routeid ||' ORDER BY v.seq;';
         -- RAISE NOTICE 'ssql: %', ssql;
         EXECUTE 'INSERT INTO route_json(routeid, vehic, rjson)
         (
