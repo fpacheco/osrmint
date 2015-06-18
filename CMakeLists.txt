@@ -54,8 +54,10 @@ endif()
 ##
 
 ## PostgreSQL
+set(PostgreSQL_ADDITIONAL_VERSIONS "9.4")
+set(PostgreSQL_ADDITIONAL_SEARCH_PATHS "/usr/include/postgresql/9.4/server")
 find_package(PostgreSQL REQUIRED)
-#MESSAGE(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
+MESSAGE(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
 ##
 
 ## Threads
@@ -81,8 +83,8 @@ find_package(CURL REQUIRED)
 ##
 
 ## CURLPP via PKG
-if (UNIX)   
-  PKG_CHECK_MODULES(CURLPP curlpp) 
+if (UNIX)
+  PKG_CHECK_MODULES(CURLPP curlpp)
   if (CURLPP_FOUND EQUAL 1)
     MESSAGE(STATUS "curlpp found" )
   else()
