@@ -1,6 +1,6 @@
 -- Functions in osrmint
 
--- Not load this file from from psql 
+-- Not load this file from from psql
 \echo Use "CREATE EXTENSION osrmint;" to load this file. \quit
 
 ---------------------------------------------------------------------
@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION osrmint_route (
     LANGUAGE c STABLE STRICT;
 --COMMENT ON FUNCTION osrmint_route(geometry) IS 'args: datapoint_sql: valid SQL (id,xf,yf,xt,yt), base_url: comething like http://localhost:5000/viaroute - Return records with id, travel distance,travel time from OSRM.';
 
-CREATE OR REPLACE FUNCTION osrmint_viaroute (        
+CREATE OR REPLACE FUNCTION osrmint_viaroute (
         IN dataviaroute_sql text,               -- sql
         IN base_url text,                       -- http://localhost:5000/viaroute
         OUT cjson text
@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION osrmint_getRoutePoints(
     IN SRID integer DEFAULT 4326,           -- SRID,
     OUT rid integer,                        -- Identificador de los puntos
     OUT seq integer,                        -- Orden
-    OUT geom geometry                       -- Geometria de salida    
+    OUT geom geometry                       -- Geometria de salida
 ) RETURNS SETOF RECORD AS
 $BODY$
 DECLARE
@@ -53,7 +53,7 @@ BEGIN
         rid := routeid;
         seq := i+1;
         X := CAST(sjson->i->>1 AS float);
-        Y := CAST(sjson->i->>0 AS float);        
+        Y := CAST(sjson->i->>0 AS float);
         geom := ST_SetSRID( ST_MakePoint(X, Y), SRID);
         RETURN NEXT;
     END LOOP;
@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION osrmint_getRouteLine(
     OUT osrmazim float,                     -- osrm time
     OUT osrmfisint boolean,                 -- Node from is intermediate point in osrm route
     OUT gacumdist float,                    -- distancia acumulada
-    OUT geom geometry                       -- Geometria de salida    
+    OUT geom geometry                       -- Geometria de salida
 ) RETURNS SETOF RECORD AS
 $BODY$
 DECLARE
@@ -113,7 +113,7 @@ BEGIN
         osrmazim := NULL;
         osrmfisint := FALSE;
         IF i >= ncid THEN
-            calle := ijson->j->>1;                                      -- Nombre de la calle            
+            calle := ijson->j->>1;                                      -- Nombre de la calle
             osrmlong := CAST(ijson->j->>2 AS float);                    -- En metros
             osrmtime := CAST(ijson->j->>4 AS float);                    -- En segundos
             osrmazim := CAST(ijson->j->>7 AS float);                    -- En grados
@@ -121,12 +121,12 @@ BEGIN
                 pseq := k;                                              -- Secuencia de levante de punto
                 k := k+1;
             END IF;
-            IF CAST( left(ijson->j->>0, 1) AS integer) = 9 THEN         -- Punto intermedio de ruta                
-                osrmfisint := TRUE;                
-            END IF;            
+            IF CAST( left(ijson->j->>0, 1) AS integer) = 9 THEN         -- Punto intermedio de ruta
+                osrmfisint := TRUE;
+            END IF;
             j := j + 1;
         ELSE
-            calle := ijson->(j-1)->>1;                                  -- Nombre de la calle        
+            calle := ijson->(j-1)->>1;                                  -- Nombre de la calle
         END IF;
         Xf := CAST(sjson->i->>1 AS float);
         Yf := CAST(sjson->i->>0 AS float);
@@ -148,11 +148,12 @@ $BODY$
 CREATE OR REPLACE FUNCTION osrmint_getRouteInstructions (
     IN json_osrm text,                      -- Texto de ruta OSRM
     OUT seq integer,                        -- Orden (1,2,3,4,5,6)
-    OUT dd varchar(4),                      -- 0: Direccion de sentido (10 = salida, 9 = Punto inermedio de la ruta!!, 15 = llegamos!!)
+    OUT dd varchar(4),                      -- 0: Direccion de sentido (10 = salida, 9 = Punto intermedio de la ruta!!, 15 = llegamos!!)
     OUT wname text,                         -- 1: Nombre de la calle
     OUT tlong integer,                      -- 2: Distancia en metros
     OUT ttime integer,                      -- 4: Tiempo en segundos
-    OUT azim float                          -- 7: Azimut
+    OUT azim float,                         -- 7: Azimut
+    OUT gseq integer                        -- 3: Geometry sequence
 ) RETURNS SETOF RECORD AS
 $BODY$
 DECLARE
@@ -169,6 +170,8 @@ BEGIN
         tlong := CAST(sjson->i->>2 AS float);
         ttime := CAST(sjson->i->>4 AS float);
         azim := CAST(sjson->i->>7 AS float);
+        -- Is 0 based then add one for one based
+        gseq := CAST(sjson->i->>3 AS integer) + 1;
         RETURN NEXT;
     END LOOP;
 END;
