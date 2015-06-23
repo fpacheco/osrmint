@@ -205,3 +205,38 @@ $BODY$
   LANGUAGE plpgsql STABLE STRICT
   COST 100
   ROWS 1000;
+
+-- SELECT * FROM osrmint_getViaIndices( (select rjson FROM ruteojson WHERE ruteorun=102), (SELECT ARRAY(SELECT nodo FROM ruteosecuencia WHERE ruteorun=102 ORDER BY secuencia)) );
+CREATE OR REPLACE FUNCTION osrmint_getViaIndices (
+    IN json_osrm text,                      -- Texto de ruta OSRM
+    IN ids integer[],                       -- Id de los indices
+    OUT id integer,                         -- Id de salida
+    OUT gseq integer                        -- 3: Geometry sequence (base 1)
+) RETURNS SETOF RECORD AS
+$BODY$
+DECLARE
+  i integer;
+  idslen integer;
+  jalen integer;
+  sjson json;
+BEGIN
+    sjson := json_osrm::json->'via_indices';
+    jalen := json_array_length(sjson);
+    idslen := array_length(ids, 1);
+    IF jalen != idslen THEN
+      RAISE EXCEPTION 'Las dimensiones de los ids de entrada y del elemento via_indices son distintas'
+      USING HINT = 'Por favor verifique';
+    END IF;
+    -- Para el loop
+    jalen := jalen - 1;
+    FOR i in 0 .. jalen LOOP
+        id := ids[i+1];
+        -- Is 0 based then add one for one based
+        gseq := CAST(sjson->>i AS integer) + 1;
+        RETURN NEXT;
+    END LOOP;
+END;
+$BODY$
+  LANGUAGE plpgsql STABLE STRICT
+  COST 100
+  ROWS 1000;
