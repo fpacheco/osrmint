@@ -49,11 +49,11 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
         // Headers
         // RFPV lo saque en versiones nuevas de OSRM
         // header.push_back("Content-Type: application/octet-stream");
-        request.setOpt(new curlpp::options::HttpHeader(header));
+        // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
-        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        // request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
         // Verbose for debug
-        // request.setOpt(new curlpp::options::Verbose(true));
+        request.setOpt(new curlpp::options::Verbose(true));
         // Write resonse to string
         request.setOpt( new curlpp::options::WriteStream( &response ) );
         std::ostringstream url;
@@ -90,8 +90,8 @@ int OSRMCurlpp::getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **re
         //???
         //curlpp::options::HttpGet();
         // Headers
-        header.push_back("Content-Type: application/octet-stream");
-        request.setOpt(new curlpp::options::HttpHeader(header));
+        // header.push_back("Content-Type: application/octet-stream");
+        // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
         request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
         // Verbose for debug
@@ -152,8 +152,9 @@ int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, char **
         //???
         //curlpp::options::HttpGet();
         // Headers
-        header.push_back("Content-Type: application/octet-stream");
-        request.setOpt(new curlpp::options::HttpHeader(header));
+        // RPFV
+        // header.push_back("Content-Type: application/octet-stream");
+        // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
         request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
         // Verbose for debug
