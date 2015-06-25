@@ -56,7 +56,7 @@ void fetch_datapoint( HeapTuple *tuple, TupleDesc *tupdesc,
     bool isnull;
 
     binval = SPI_getbinval( *tuple, *tupdesc, columns->id, &isnull );
-    if ( isnull ) elog( ERROR, "container.id contains a null value" );
+    if ( isnull ) elog( ERROR, "datapoints.id contains a null value" );
     data->id = DatumGetInt32( binval );
 
     binval = SPI_getbinval( *tuple, *tupdesc, columns->xf, &isnull );
@@ -115,15 +115,12 @@ int route(
     SPIplan = SPI_prepare( datapoint_sql, 0, NULL );
 
     if ( SPIplan  == NULL ) {
-        elog( ERROR,
-              "route: couldn't create query plan for datapoint via SPI" );
+        elog( ERROR, "route: couldn't create query plan for datapoint via SPI" );
         return -1;
     }
 
-    if ( ( SPIportal = SPI_cursor_open( NULL, SPIplan, NULL, NULL,
-                                        true ) ) == NULL ) {
-        elog( ERROR, "route: SPI_cursor_open('%s') returns NULL",
-              datapoint_sql );
+    if ( ( SPIportal = SPI_cursor_open( NULL, SPIplan, NULL, NULL, true ) ) == NULL ) {
+        elog( ERROR, "route: SPI_cursor_open('%s') returns NULL", datapoint_sql );
         return -1;
     }
 
@@ -142,7 +139,6 @@ int route(
         }
 
         ntuples = SPI_processed;
-
         datapoint_count += ntuples;
 
         if ( ntuples > 0 ) {
@@ -180,30 +176,32 @@ int route(
         structs so call the C++ wrapper and solve the problem.
     **********************************************************************/
 
-    DBG( "Calling route\n" );
-    ret = c_wrapper_route(
-        datapoints,
-        baseURL,
-        datapoint_count,
-        result,
-        result_count,
-        &err_msg
-    );
+    if (datapoint_count>0) {
+      DBG( "Calling route\n" );
+      ret = c_wrapper_route(
+          datapoints,
+          baseURL,
+          datapoint_count,
+          result,
+          result_count,
+          &err_msg
+      );
 
-    /*
-    DBG( "osrmint_route returned status: %i", ret );
-    DBG( "result_count = %i", *result_count );
+      /*
+      DBG( "osrmint_route returned status: %i", ret );
+      DBG( "result_count = %i", *result_count );
 
-    DBG( "Message received from inside:" );
-    DBG( "%s", err_msg );
-    */
+      DBG( "Message received from inside:" );
+      DBG( "%s", err_msg );
+      */
 
-    if ( ret < 0 ) {
-        ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
-                          errmsg( "Error finding route: %s:\n", err_msg ) ) );
+      if ( ret < 0 ) {
+          ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ), errmsg( "Error finding route: %s:\n", err_msg ) ) );
+      }
+      pfree(datapoints);
+      return finish( SPIcode, ret );
+    } else {
+      elog( ERROR, "La consulta no devuelve datos" );
+      return finish( SPIcode, -1 );
     }
-
-    pfree(datapoints);
-    return finish( SPIcode, ret );
 }
-

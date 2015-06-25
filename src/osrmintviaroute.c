@@ -149,7 +149,6 @@ int viaroute(char *dataviaroute_sql, char *baseURL, char** result) {
         }
 
         ntuples = SPI_processed;
-
         dataviaroute_count += ntuples;
 
         if ( ntuples > 0 ) {
@@ -188,19 +187,20 @@ int viaroute(char *dataviaroute_sql, char *baseURL, char** result) {
     **********************************************************************/
 
     DBG( "c_wrapper_viaroute for %i records\n", dataviaroute_count );
-
-    ret = c_wrapper_viaroute(
-        dataviaroutes,
-        baseURL,
-        dataviaroute_count,
-        result
-    );
-
-    if ( ret<0 ) {
-        ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),
-                          errmsg( "Error finding route from OSRM. Check sql and URL\n") ) );
+    if (dataviaroute_count>0) {
+      ret = c_wrapper_viaroute(
+          dataviaroutes,
+          baseURL,
+          dataviaroute_count,
+          result
+      );
+      if ( ret<0 ) {
+          ereport( ERROR, ( errcode( ERRCODE_E_R_E_CONTAINING_SQL_NOT_PERMITTED ),errmsg( "Error finding route from OSRM. Check sql and URL\n") ) );
+      }
+      pfree(dataviaroutes);
+      return finish( SPIcode, ret );
+    } else {
+      elog( ERROR, "La consulta no devuelve datos" );
+      return finish( SPIcode, -1 );
     }
-
-    pfree(dataviaroutes);
-    return finish( SPIcode, ret );
 }

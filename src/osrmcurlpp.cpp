@@ -67,7 +67,7 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
         // Parse response in json
         parseOSRM( response.str().c_str() );
     } catch ( curlpp::LogicError & e ) {
-        std::cout << "curlpp LogicError: " << e.what() << std::endl;ss
+        std::cout << "curlpp LogicError: " << e.what() << std::endl;
         mTotalDistance = -1;
         mTotalTime = -1;
     } catch ( curlpp::RuntimeError & e ) {
