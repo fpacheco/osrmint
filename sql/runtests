@@ -1,0 +1,10 @@
+#!/bin/bash
+DBUSER=postgres
+DBHOST=localhost
+DBPORT=5432
+DBNAME=osrminttest
+
+dropdb  -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
+createdb -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
+
+psql -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME < osrminttest.sql
