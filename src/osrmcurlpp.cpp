@@ -47,7 +47,8 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
         //???
         //curlpp::options::HttpGet();
         // Headers
-        header.push_back("Content-Type: application/octet-stream");
+        // RFPV lo saque en versiones nuevas de OSRM
+        // header.push_back("Content-Type: application/octet-stream");
         request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
         request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
@@ -62,7 +63,7 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
             << "&alt=false" << "&geometry=false" << "&instructions=false";
         request.setOpt( new curlpp::options::Url(url.str()) );
         request.perform();
-        //std::cout << "response: " << response.str() << std::endl;
+        std::cout << "response: " << response.str() << std::endl;
         // Parse response in json
         parseOSRM( response.str().c_str() );
     } catch ( curlpp::LogicError & e ) {
@@ -259,4 +260,3 @@ void OSRMCurlpp::parseOSRM(const char* resp){
         }
     }
 }
-
