@@ -19,3 +19,4 @@ Para tests se crea una base de datos específica:
 cd sql
 ./runtests
 ```
+Por mas información consulte la Wiki: https://github.com/fpacheco/osrmint/wiki.
