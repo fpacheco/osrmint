@@ -51,7 +51,7 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
         // header.push_back("Content-Type: application/octet-stream");
         // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
-        // request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM) - route"));
         // Verbose for debug
         request.setOpt(new curlpp::options::Verbose(true));
         // Write resonse to string
@@ -67,7 +67,7 @@ void OSRMCurlpp::route(float fLon, float fLat, float tLon, float tLat){
         // Parse response in json
         parseOSRM( response.str().c_str() );
     } catch ( curlpp::LogicError & e ) {
-        std::cout << "curlpp LogicError: " << e.what() << std::endl;
+        std::cout << "curlpp LogicError: " << e.what() << std::endl;ss
         mTotalDistance = -1;
         mTotalTime = -1;
     } catch ( curlpp::RuntimeError & e ) {
@@ -93,7 +93,7 @@ int OSRMCurlpp::getRoute(datapoint_t *datapoints, int ndatapoints, datadt_t **re
         // header.push_back("Content-Type: application/octet-stream");
         // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
-        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM) - getRoute"));
         // Verbose for debug
         // request.setOpt(new curlpp::options::Verbose(true));
         // Write resonse to string
@@ -156,7 +156,7 @@ int OSRMCurlpp::getViaRoute(dataviaroute_t *datapoints, int ndatapoints, char **
         // header.push_back("Content-Type: application/octet-stream");
         // request.setOpt(new curlpp::options::HttpHeader(header));
         // UserAgent
-        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM)"));
+        request.setOpt(new curlpp::options::UserAgent("Ruteo de residuos solidos (IDM) - getViaRoute"));
         // Verbose for debug
         // request.setOpt(new curlpp::options::Verbose(true));
         // Write resonse to string
