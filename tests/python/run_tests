@@ -1,0 +1,13 @@
+#!/bin/bash
+# creo la BD
+sh ./createdatabase
+#python -m unittest discover
+python -m coverage run tests.py
+python -m coverage html
+curDir=$(pwd)
+echo '*****************************************************************************************************'
+echo '*                                                                                                   *'
+echo '* Ver resultados de cobertura con:                                                                   *'
+echo "* firefox -new-tab $curDir/htmlcov/index.html"
+echo '*                                                                                                   *'
+echo '*****************************************************************************************************'

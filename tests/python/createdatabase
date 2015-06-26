@@ -7,6 +7,5 @@ DBNAME=osrminttest
 dropdb  -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
 createdb -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
 psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < osrminttest.sql
-
-psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < route.sql
-psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < viaroute.sql
+#psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < route.sql
+#psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < viaroute.sql
