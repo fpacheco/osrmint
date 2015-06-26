@@ -86,87 +86,16 @@ FROM
             self.assertEqual(rows[0][1]>0, True)
             self.assertEqual(rows[0][2]>0, True)
 
+    def test_routeFailFromTables(self):
+        db = self.db
 
-
-    """
-    def test_notequal(self):
-        p1 = Persona(paisDocumento=2, tipoDocumento=5,
-            tipoPersona=7, numeroDocumento='36776855')
-        p2 = Persona(paisDocumento=1, tipoDocumento=5,
-            tipoPersona=7, numeroDocumento='36776855')
-        self.assertEqual(p1!=p2, True)
-        self.assertNotEqual(p1==p2, True)
-
-    def test_fromDict(self):
-        p = Persona()
-        d = dict(personaDTO=self.pDictPC)
-        p.fromDict(d)
-        for key in d['personaDTO']:
-            self.assertEqual(getattr(p, key), d['personaDTO'][key])
-
-    def test_fromJSON(self):
-        p = Persona()
-        d = dict(personaDTO=self.pDictPC)
-        j = json.dumps(d)
-        p.fromJSON(j)
-        for key in d['personaDTO']:
-            self.assertEqual(getattr(p, key), d['personaDTO'][key])
-
-    def test_fromXML(self):
-        p = Persona()
-        p.fromXML(self.xmlPC)
-        d = p.asDict()
-        for key in d['personaDTO']:
-            self.assertEqual(getattr(p, key), d['personaDTO'][key])
-
-    def test_asDict(self):
-        p = Persona(
-            paisDocumento=self.pDictPB['paisDocumento'],
-            tipoDocumento=self.pDictPB['tipoDocumento'],
-            tipoPersona=self.pDictPB['tipoPersona'],
-            numeroDocumento=self.pDictPB['numeroDocumento'],
-        )
-        self.assertEqual(p.asDict(), dict(personaDTO=self.pDictPB))
-
-    def test_asJSON(self):
-        p = Persona()
-        for key in self.pDictPC:
-            setattr(p, key, self.pDictPC[key])
-        d = dict(personaDTO=self.pDictPC)
-        dj = json.loads(p.asJSON())
-        #j = json.dumps(d, sort_keys=True)
-        self.assertEqual(dj, d)
-
-    def test_asXML(self):
-        import xml.etree.ElementTree as ET
-        root = ET.fromstring(self.xmlPC)
-        t = root.tag
-        d = dict()
-        for child in root:
-            d[child.tag] = child.text
-        doc = {t: d}
-        p = Persona()
-        for key in self.pDictPC:
-            setattr(p, key, self.pDictPC[key])
-        #self.assertEqual(p.asXML(), self.xmlPC)
-
-    def test_validarRUT(self):
-        pass
-
-    def test_validarCI(self):
-        p = Persona()
-        p.fromDict(dict(personaDTO=self.pDictPB))
-        for ci in self.notvalid_CIS:
-            p.numeroDocumento = ci
-            self.assertEqual(p.validarNumeroDocumento(), False)
-        for ci in self.valid_CIS:
-            p.numeroDocumento = ci
-            self.assertEqual(p.validarNumeroDocumento(), True)
-        for ci in self.invalid_CIS:
-            p.numeroDocumento = ci
-            self.assertEqual(p.validarNumeroDocumento(), False)
-
-    """
+        sql = """SELECT id, tdist, ttime FROM osrmint_route('SELECT * FROM route WHERE id=-99999 ORDER BY random() LIMIT 50','http://127.0.0.1:5000/viaroute');"""
+        # mejor usar self.assertRaises(roman.OutOfRangeError, roman.toRoman, 4000)
+        try:
+            rows = db.executesql(sql)
+        except Exception, e:
+            print "%s" % e
+            self.assertEqual('%s' % e == 'La consulta no devuelve datos', True)
 
 if __name__ == '__main__':
     unittest.main()
