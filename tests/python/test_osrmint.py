@@ -12,7 +12,7 @@ class TestOsrmint(unittest.TestCase):
     def setUp(self):
         self.url = "http://127.0.0.1:5000/viaroute"
         self.nr = [10,100,1000]
-        self.db = DAL('postgres://postgres:12rfpv12@localhost/osrminttest')
+        self.db = DAL('postgres://postgres:12desa12@localhost/osrminttest')
 
     def uniqueTableName(self, pre='A', jchar='_'):
         import uuid

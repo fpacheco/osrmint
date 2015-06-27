@@ -54,8 +54,8 @@ endif()
 ##
 
 ## PostgreSQL
-set(PostgreSQL_ADDITIONAL_VERSIONS "9.3")
-set(PostgreSQL_ADDITIONAL_SEARCH_PATHS "/usr/include/postgresql/9.3/server")
+set(PostgreSQL_ADDITIONAL_VERSIONS "9.4" "9.3")
+set(PostgreSQL_ADDITIONAL_SEARCH_PATHS "/usr/include/postgresql/9.4/server" "/usr/include/postgresql/9.3/server")
 find_package(PostgreSQL REQUIRED)
 MESSAGE(STATUS "PostgreSQL_LIBRARIES: " ${PostgreSQL_LIBRARIES})
 ##
