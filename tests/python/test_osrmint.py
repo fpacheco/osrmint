@@ -12,7 +12,7 @@ class TestOsrmint(unittest.TestCase):
     def setUp(self):
         self.url = "http://127.0.0.1:5000/viaroute"
         self.nr = [10,100,1000]
-        self.db = DAL('postgres://postgres:12rfpv12@localhost/osrminttest')
+        self.db = DAL('postgres://postgres:12desa12@localhost/osrminttest')
 
     def uniqueTableName(self, pre='A', jchar='_'):
         import uuid
@@ -33,6 +33,9 @@ FROM osrmint_route(
         self.assertEqual(rows[0][0]==id, True)
         self.assertEqual(rows[0][1]>0, True)
         self.assertEqual(rows[0][2]>0, True)
+
+    def test_routeOkFromNumbersSave(self):
+        db = self.db
 
         id = 1234
         temptable = self.uniqueTableName()
@@ -69,6 +72,10 @@ FROM
             self.assertEqual(rows[0][1]>0, True)
             self.assertEqual(rows[0][2]>0, True)
 
+    def test_routeOkFromTablesSave(self):
+        db = self.db
+
+        for nr in self.nr:
             temptable = self.uniqueTableName()
             sql = """SELECT
     id, tdist, ttime INTO TEMP %s
