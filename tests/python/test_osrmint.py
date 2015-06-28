@@ -34,6 +34,9 @@ FROM osrmint_route(
         self.assertEqual(rows[0][1]>0, True)
         self.assertEqual(rows[0][2]>0, True)
 
+    def test_routeOkFromNumbersSave(self):
+        db = self.db
+
         id = 1234
         temptable = self.uniqueTableName()
         sql = """SELECT
@@ -69,6 +72,10 @@ FROM
             self.assertEqual(rows[0][1]>0, True)
             self.assertEqual(rows[0][2]>0, True)
 
+    def test_routeOkFromTablesSave(self):
+        db = self.db
+
+        for nr in self.nr:
             temptable = self.uniqueTableName()
             sql = """SELECT
     id, tdist, ttime INTO TEMP %s
