@@ -32,3 +32,6 @@ build/*
 
 #Coverage
 tests/python/htmlcov*
+
+#Python compile
+*.pyc

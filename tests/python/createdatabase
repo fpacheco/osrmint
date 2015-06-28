@@ -4,8 +4,6 @@ DBHOST=localhost
 DBPORT=5432
 DBNAME=osrminttest
 
-dropdb  -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
-createdb -h $DBHOST -U $DBUSER -p $DBPORT $DBNAME
+psql -h $DBHOST -U $DBUSER -p $DBPORT -d template1 -c "DROP DATABASE $DBNAME;"
+psql -h $DBHOST -U $DBUSER -p $DBPORT -d template1 -c "CREATE DATABASE $DBNAME;"
 psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < osrminttest.sql
-#psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < route.sql
-#psql -h $DBHOST -U $DBUSER -p $DBPORT -d $DBNAME < viaroute.sql
