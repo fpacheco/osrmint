@@ -36,7 +36,7 @@ Datum osrmint_route(PG_FUNCTION_ARGS) {
 
         sql = PG_GETARG_TEXT_P(0);
         if (PG_NARGS()==1 || PG_ARGISNULL(2)) {
-            baseURL = "http://127.0.0.1:5000/viaroute";
+            baseURL = cstring2text("http://127.0.0.1:5000/viaroute");
         } else {
             baseURL = PG_GETARG_TEXT_P(1);
         }
@@ -144,7 +144,7 @@ Datum osrmint_viaroute(PG_FUNCTION_ARGS) {
     if (PG_NARGS()==2 && PG_ARGISNULL(2)) {
         baseURL = PG_GETARG_TEXT_P(1);
     } else {
-        baseURL = "http://127.0.0.1:5000/viaroute";
+        baseURL = cstring2text("http://127.0.0.1:5000/viaroute");
     }
 
     ret = viaroute(
