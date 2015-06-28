@@ -24,7 +24,7 @@ class OSRMCurlpp
 public:
     ~OSRMCurlpp();
     void setBaseURL(std::string url) { mBaseURL = url; }
-    void setBaseURL(char* url) { mBaseURL = std::string(url); }
+    void setBaseURL(char const *url) { mBaseURL = std::string(url); }
     std::string baseURL() { return mBaseURL; }
     bool checkCon();
 
